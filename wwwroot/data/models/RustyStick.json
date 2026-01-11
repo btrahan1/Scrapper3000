@@ -1,0 +1,172 @@
+{
+    "Name": "RustyStick",
+    "Stats": {
+        "ATK": 2,
+        "Price": 0,
+        "Description": "A lengths of rusted metal pipe. Hits better than bare knuckles."
+    },
+    "Parts": [
+        {
+            "Id": "pipe_body",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.75,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.08,
+                1.5,
+                0.08
+            ],
+            "ColorHex": "#4a4542",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "pipe_hollow_bore",
+            "ParentId": "pipe_body",
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.06,
+                1.6,
+                0.06
+            ],
+            "ColorHex": "#000000",
+            "Material": "Metal",
+            "Operation": "Subtract"
+        },
+        {
+            "Id": "rust_patch_top",
+            "ParentId": "pipe_body",
+            "Shape": "Sphere",
+            "Position": [
+                0.035,
+                0.6,
+                0.02
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.04,
+                0.15,
+                0.04
+            ],
+            "ColorHex": "#b85425",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "rust_patch_mid_encrusted",
+            "ParentId": "pipe_body",
+            "Shape": "Torus",
+            "Position": [
+                0.0,
+                -0.2,
+                0.0
+            ],
+            "Rotation": [
+                5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.09,
+                0.05,
+                0.09
+            ],
+            "ColorHex": "#692813",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "rust_patch_bottom_clump",
+            "ParentId": "pipe_body",
+            "Shape": "Capsule",
+            "Position": [
+                -0.03,
+                -0.5,
+                -0.01
+            ],
+            "Rotation": [
+                0,
+                0,
+                30
+            ],
+            "Scale": [
+                0.05,
+                0.2,
+                0.05
+            ],
+            "ColorHex": "#8a3a1b",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "corrosion_pit",
+            "ParentId": "pipe_body",
+            "Shape": "Sphere",
+            "Position": [
+                0.04,
+                0.1,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.05,
+                0.03
+            ],
+            "ColorHex": "#2b2624",
+            "Material": "Metal",
+            "Operation": "Subtract"
+        },
+        {
+            "Id": "jagged_end_top",
+            "ParentId": "pipe_body",
+            "Shape": "Box",
+            "Position": [
+                0.04,
+                0.75,
+                0.0
+            ],
+            "Rotation": [
+                45,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.05,
+                0.05
+            ],
+            "ColorHex": "#000000",
+            "Material": "Metal",
+            "Operation": "Subtract"
+        }
+    ],
+    "Timeline": []
+}

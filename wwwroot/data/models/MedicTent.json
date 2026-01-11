@@ -1,0 +1,212 @@
+{
+    "Name": "MedicTent",
+    "Parts": [
+        {
+            "Id": "tent_base",
+            "Shape": "Box",
+            "Position": [
+                0,
+                1.5,
+                0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                4,
+                3,
+                4
+            ],
+            "ColorHex": "#4e3b31",
+            "Material": "Rubber",
+            "Operation": "Union"
+        },
+        {
+            "Id": "tent_roof",
+            "ParentId": "tent_base",
+            "Shape": "Cone",
+            "Position": [
+                0,
+                1.5,
+                0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                5,
+                2,
+                5
+            ],
+            "ColorHex": "#3e2723",
+            "Material": "Rubber",
+            "Operation": "Union"
+        },
+        {
+            "Id": "medic_cross_horizontal",
+            "ParentId": "tent_base",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0.5,
+                2.01
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.8,
+                0.2,
+                0.02
+            ],
+            "ColorHex": "#d32f2f",
+            "Material": "Glow",
+            "Operation": "Union"
+        },
+        {
+            "Id": "medic_cross_vertical",
+            "ParentId": "tent_base",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0.5,
+                2.01
+            ],
+            "Rotation": [
+                0,
+                0,
+                90
+            ],
+            "Scale": [
+                0.8,
+                0.2,
+                0.02
+            ],
+            "ColorHex": "#d32f2f",
+            "Material": "Glow",
+            "Operation": "Union"
+        },
+        {
+            "Id": "support_pole_1",
+            "ParentId": "tent_base",
+            "Shape": "Cylinder",
+            "Position": [
+                -1.9,
+                -1,
+                1.9
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.1,
+                3,
+                0.1
+            ],
+            "ColorHex": "#424242",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "support_pole_2",
+            "ParentId": "tent_base",
+            "Shape": "Cylinder",
+            "Position": [
+                1.9,
+                -1,
+                1.9
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.1,
+                3,
+                0.1
+            ],
+            "ColorHex": "#424242",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "support_pole_3",
+            "ParentId": "tent_base",
+            "Shape": "Cylinder",
+            "Position": [
+                -1.9,
+                -1,
+                -1.9
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.1,
+                3,
+                0.1
+            ],
+            "ColorHex": "#424242",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "support_pole_4",
+            "ParentId": "tent_base",
+            "Shape": "Cylinder",
+            "Position": [
+                1.9,
+                -1,
+                -1.9
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.1,
+                3,
+                0.1
+            ],
+            "ColorHex": "#424242",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "opening_flap",
+            "ParentId": "tent_base",
+            "Shape": "Box",
+            "Position": [
+                0.8,
+                -0.5,
+                2.0
+            ],
+            "Rotation": [
+                0,
+                15,
+                0
+            ],
+            "Scale": [
+                1.5,
+                2,
+                0.1
+            ],
+            "ColorHex": "#5d4037",
+            "Material": "Rubber",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

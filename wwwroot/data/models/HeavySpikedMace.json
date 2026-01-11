@@ -1,0 +1,92 @@
+{
+  "Name": "HeavySpikedMace",
+  "Stats": {
+    "ATK": 15,
+    "Price": 800,
+    "Description": "A brutal masterpiece of scrap engineering."
+  },
+  "Parts": [
+    {
+      "Id": "handle",
+      "Shape": "Cylinder",
+      "Position": [
+        0,
+        0.5,
+        0
+      ],
+      "Scale": [
+        0.1,
+        1.0,
+        0.1
+      ],
+      "ColorHex": "#333333",
+      "Material": "Metal",
+      "Operation": "Union"
+    },
+    {
+      "Id": "head",
+      "ParentId": "handle",
+      "Shape": "Sphere",
+      "Position": [
+        0,
+        0.6,
+        0
+      ],
+      "Scale": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "ColorHex": "#222222",
+      "Material": "Metal",
+      "Operation": "Union"
+    },
+    {
+      "Id": "spike1",
+      "ParentId": "head",
+      "Shape": "Cone",
+      "Position": [
+        0.25,
+        0,
+        0
+      ],
+      "Rotation": [
+        0,
+        0,
+        -90
+      ],
+      "Scale": [
+        0.1,
+        0.2,
+        0.1
+      ],
+      "ColorHex": "#777777",
+      "Material": "Metal",
+      "Operation": "Union"
+    },
+    {
+      "Id": "spike2",
+      "ParentId": "head",
+      "Shape": "Cone",
+      "Position": [
+        -0.25,
+        0,
+        0
+      ],
+      "Rotation": [
+        0,
+        0,
+        90
+      ],
+      "Scale": [
+        0.1,
+        0.2,
+        0.1
+      ],
+      "ColorHex": "#777777",
+      "Material": "Metal",
+      "Operation": "Union"
+    }
+  ],
+  "Timeline": []
+}

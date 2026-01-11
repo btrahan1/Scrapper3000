@@ -1,0 +1,46 @@
+{
+    "Name": "ReinforcedOveralls",
+    "Stats": {
+        "DEF": 8,
+        "Price": 200,
+        "Description": "Stitched with scrap leather."
+    },
+    "Parts": [
+        {
+            "Id": "body",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.5,
+                0.1,
+                0.4
+            ],
+            "ColorHex": "#1a1a3a",
+            "Material": "Cloth",
+            "Operation": "Union"
+        },
+        {
+            "Id": "patch",
+            "ParentId": "body",
+            "Shape": "Box",
+            "Position": [
+                0.1,
+                0.06,
+                0.1
+            ],
+            "Scale": [
+                0.2,
+                0.02,
+                0.2
+            ],
+            "ColorHex": "#4b301a",
+            "Material": "Cloth",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

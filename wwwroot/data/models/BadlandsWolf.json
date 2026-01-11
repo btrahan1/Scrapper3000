@@ -1,0 +1,793 @@
+{
+    "Name": "BadlandsWolf",
+    "Stats": {
+        "HP": 30,
+        "ATK": 16,
+        "DEF": 5,
+        "AtkSpeed": 1.5
+    },
+    "Parts": [
+        {
+            "Id": "body_main",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0.5,
+                0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.22,
+                0.25,
+                0.45
+            ],
+            "ColorHex": "#5D4037",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "chest",
+            "ParentId": "body_main",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0.05,
+                0.25
+            ],
+            "Rotation": [
+                -5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.26,
+                0.28,
+                0.35
+            ],
+            "ColorHex": "#4E342E",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "neck_base",
+            "ParentId": "chest",
+            "Shape": "Cone",
+            "Position": [
+                0,
+                0.15,
+                0.15
+            ],
+            "Rotation": [
+                45,
+                0,
+                0
+            ],
+            "Scale": [
+                0.18,
+                0.25,
+                0.18
+            ],
+            "ColorHex": "#6D4C41",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "neck_ruff",
+            "ParentId": "neck_base",
+            "Shape": "Torus",
+            "Position": [
+                0,
+                0,
+                0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.2,
+                0.2,
+                0.08
+            ],
+            "ColorHex": "#3E2723",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "head",
+            "ParentId": "neck_base",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0.18,
+                0
+            ],
+            "Rotation": [
+                -45,
+                0,
+                0
+            ],
+            "Scale": [
+                0.16,
+                0.14,
+                0.18
+            ],
+            "ColorHex": "#5D4037",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "snout",
+            "ParentId": "head",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.02,
+                0.12
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.08,
+                0.08,
+                0.15
+            ],
+            "ColorHex": "#4E342E",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "nose",
+            "ParentId": "snout",
+            "Shape": "Sphere",
+            "Position": [
+                0,
+                0.04,
+                0.08
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.04,
+                0.03,
+                0.03
+            ],
+            "ColorHex": "#1a1a1a",
+            "Material": "Rubber",
+            "Operation": "Union"
+        },
+        {
+            "Id": "jaw_lower",
+            "ParentId": "head",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.06,
+                0.10
+            ],
+            "Rotation": [
+                15,
+                0,
+                0
+            ],
+            "Scale": [
+                0.07,
+                0.04,
+                0.14
+            ],
+            "ColorHex": "#3E2723",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "fang_upper_L",
+            "ParentId": "snout",
+            "Shape": "Cone",
+            "Position": [
+                -0.028,
+                -0.04,
+                0.06
+            ],
+            "Rotation": [
+                180,
+                0,
+                0
+            ],
+            "Scale": [
+                0.015,
+                0.06,
+                0.015
+            ],
+            "ColorHex": "#EEEEEE",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "fang_upper_R",
+            "ParentId": "snout",
+            "Shape": "Cone",
+            "Position": [
+                0.028,
+                -0.04,
+                0.06
+            ],
+            "Rotation": [
+                180,
+                0,
+                0
+            ],
+            "Scale": [
+                0.015,
+                0.06,
+                0.015
+            ],
+            "ColorHex": "#EEEEEE",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "ear_right",
+            "ParentId": "head",
+            "Shape": "Cone",
+            "Position": [
+                0.06,
+                0.08,
+                -0.05
+            ],
+            "Rotation": [
+                -10,
+                0,
+                -15
+            ],
+            "Scale": [
+                0.04,
+                0.09,
+                0.02
+            ],
+            "ColorHex": "#4E342E",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "ear_left_stump",
+            "ParentId": "head",
+            "Shape": "Cylinder",
+            "Position": [
+                -0.06,
+                0.06,
+                -0.05
+            ],
+            "Rotation": [
+                -10,
+                0,
+                15
+            ],
+            "Scale": [
+                0.03,
+                0.02,
+                0.02
+            ],
+            "ColorHex": "#3E2723",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "eye_left",
+            "ParentId": "head",
+            "Shape": "Sphere",
+            "Position": [
+                -0.04,
+                0.02,
+                0.05
+            ],
+            "Rotation": [
+                0,
+                -10,
+                0
+            ],
+            "Scale": [
+                0.02,
+                0.02,
+                0.01
+            ],
+            "ColorHex": "#FFB74D",
+            "Material": "Glow",
+            "Operation": "Union"
+        },
+        {
+            "Id": "eye_right",
+            "ParentId": "head",
+            "Shape": "Sphere",
+            "Position": [
+                0.04,
+                0.02,
+                0.05
+            ],
+            "Rotation": [
+                0,
+                10,
+                0
+            ],
+            "Scale": [
+                0.02,
+                0.02,
+                0.01
+            ],
+            "ColorHex": "#FFB74D",
+            "Material": "Glow",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fl_shoulder",
+            "ParentId": "chest",
+            "Shape": "Sphere",
+            "Position": [
+                -0.12,
+                0,
+                0.10
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.09,
+                0.12,
+                0.09
+            ],
+            "ColorHex": "#4E342E",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fl_upper",
+            "ParentId": "leg_fl_shoulder",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.15,
+                0
+            ],
+            "Rotation": [
+                10,
+                0,
+                0
+            ],
+            "Scale": [
+                0.06,
+                0.2,
+                0.06
+            ],
+            "ColorHex": "#5D4037",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fl_lower",
+            "ParentId": "leg_fl_upper",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.18,
+                0
+            ],
+            "Rotation": [
+                -15,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.2,
+                0.05
+            ],
+            "ColorHex": "#6D4C41",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "paw_fl",
+            "ParentId": "leg_fl_lower",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.12,
+                0.02
+            ],
+            "Rotation": [
+                5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.04,
+                0.07
+            ],
+            "ColorHex": "#3E2723",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fr_shoulder",
+            "ParentId": "chest",
+            "Shape": "Sphere",
+            "Position": [
+                0.12,
+                0,
+                0.10
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.09,
+                0.12,
+                0.09
+            ],
+            "ColorHex": "#4E342E",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fr_upper",
+            "ParentId": "leg_fr_shoulder",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.15,
+                0
+            ],
+            "Rotation": [
+                10,
+                0,
+                0
+            ],
+            "Scale": [
+                0.06,
+                0.2,
+                0.06
+            ],
+            "ColorHex": "#5D4037",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fr_lower",
+            "ParentId": "leg_fr_upper",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.18,
+                0
+            ],
+            "Rotation": [
+                -15,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.2,
+                0.05
+            ],
+            "ColorHex": "#6D4C41",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "paw_fr",
+            "ParentId": "leg_fr_lower",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.12,
+                0.02
+            ],
+            "Rotation": [
+                5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.04,
+                0.07
+            ],
+            "ColorHex": "#3E2723",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_bl_hip",
+            "ParentId": "body_main",
+            "Shape": "Sphere",
+            "Position": [
+                -0.11,
+                0,
+                -0.15
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.10,
+                0.14,
+                0.10
+            ],
+            "ColorHex": "#4E342E",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_bl_thigh",
+            "ParentId": "leg_bl_hip",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.12,
+                0
+            ],
+            "Rotation": [
+                -20,
+                0,
+                0
+            ],
+            "Scale": [
+                0.07,
+                0.22,
+                0.08
+            ],
+            "ColorHex": "#5D4037",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_bl_shin",
+            "ParentId": "leg_bl_thigh",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.18,
+                -0.02
+            ],
+            "Rotation": [
+                35,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.2,
+                0.05
+            ],
+            "ColorHex": "#6D4C41",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "paw_bl",
+            "ParentId": "leg_bl_shin",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.12,
+                0.02
+            ],
+            "Rotation": [
+                -15,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.04,
+                0.07
+            ],
+            "ColorHex": "#3E2723",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_br_hip",
+            "ParentId": "body_main",
+            "Shape": "Sphere",
+            "Position": [
+                0.11,
+                0,
+                -0.15
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.10,
+                0.14,
+                0.10
+            ],
+            "ColorHex": "#4E342E",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_br_thigh",
+            "ParentId": "leg_br_hip",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.12,
+                0
+            ],
+            "Rotation": [
+                -20,
+                0,
+                0
+            ],
+            "Scale": [
+                0.07,
+                0.22,
+                0.08
+            ],
+            "ColorHex": "#5D4037",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_br_shin",
+            "ParentId": "leg_br_thigh",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.18,
+                -0.02
+            ],
+            "Rotation": [
+                35,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.2,
+                0.05
+            ],
+            "ColorHex": "#6D4C41",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "paw_br",
+            "ParentId": "leg_br_shin",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.12,
+                0.02
+            ],
+            "Rotation": [
+                -15,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.04,
+                0.07
+            ],
+            "ColorHex": "#3E2723",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "tail_base",
+            "ParentId": "body_main",
+            "Shape": "Cone",
+            "Position": [
+                0,
+                0.1,
+                -0.22
+            ],
+            "Rotation": [
+                -45,
+                0,
+                0
+            ],
+            "Scale": [
+                0.08,
+                0.2,
+                0.08
+            ],
+            "ColorHex": "#4E342E",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "tail_tip",
+            "ParentId": "tail_base",
+            "Shape": "Cone",
+            "Position": [
+                0,
+                0.1,
+                0
+            ],
+            "Rotation": [
+                20,
+                0,
+                0
+            ],
+            "Scale": [
+                0.06,
+                0.2,
+                0.06
+            ],
+            "ColorHex": "#3E2723",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "back_tuft_1",
+            "ParentId": "chest",
+            "Shape": "Cone",
+            "Position": [
+                0,
+                0.15,
+                0
+            ],
+            "Rotation": [
+                10,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.1,
+                0.05
+            ],
+            "ColorHex": "#3E2723",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "back_tuft_2",
+            "ParentId": "body_main",
+            "Shape": "Cone",
+            "Position": [
+                0,
+                0.13,
+                0
+            ],
+            "Rotation": [
+                -10,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.1,
+                0.05
+            ],
+            "ColorHex": "#3E2723",
+            "Material": "Leather",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

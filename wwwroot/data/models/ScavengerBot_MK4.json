@@ -1,0 +1,534 @@
+{
+    "Name": "ScavengerBot_MK4",
+    "Parts": [
+        {
+            "Id": "chassis_core",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0.35,
+                0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.25,
+                0.18,
+                0.35
+            ],
+            "ColorHex": "#455A64",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "cargo_hump",
+            "ParentId": "chassis_core",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0.12,
+                -0.05
+            ],
+            "Rotation": [
+                5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.20,
+                0.15,
+                0.20
+            ],
+            "ColorHex": "#8D6E63",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "head_unit",
+            "ParentId": "chassis_core",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0.02,
+                0.22
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.15,
+                0.12,
+                0.10
+            ],
+            "ColorHex": "#37474F",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "eye_sensor_left",
+            "ParentId": "head_unit",
+            "Shape": "Sphere",
+            "Position": [
+                -0.04,
+                0.02,
+                0.05
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.03,
+                0.03,
+                0.01
+            ],
+            "ColorHex": "#FF0000",
+            "Material": "Glow",
+            "Operation": "Union"
+        },
+        {
+            "Id": "eye_sensor_right",
+            "ParentId": "head_unit",
+            "Shape": "Sphere",
+            "Position": [
+                0.04,
+                0.02,
+                0.05
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.03,
+                0.03,
+                0.01
+            ],
+            "ColorHex": "#FF0000",
+            "Material": "Glow",
+            "Operation": "Union"
+        },
+        {
+            "Id": "sensor_antenna",
+            "ParentId": "head_unit",
+            "Shape": "Cylinder",
+            "Position": [
+                0.06,
+                0.08,
+                0
+            ],
+            "Rotation": [
+                0,
+                0,
+                10
+            ],
+            "Scale": [
+                0.005,
+                0.2,
+                0.005
+            ],
+            "ColorHex": "#CFD8DC",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "front_bumper",
+            "ParentId": "chassis_core",
+            "Shape": "Cylinder",
+            "Position": [
+                0,
+                -0.08,
+                0.18
+            ],
+            "Rotation": [
+                0,
+                0,
+                90
+            ],
+            "Scale": [
+                0.02,
+                0.26,
+                0.02
+            ],
+            "ColorHex": "#263238",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fl_joint",
+            "ParentId": "chassis_core",
+            "Shape": "Sphere",
+            "Position": [
+                -0.14,
+                -0.05,
+                0.14
+            ],
+            "Rotation": [
+                0,
+                45,
+                0
+            ],
+            "Scale": [
+                0.06,
+                0.06,
+                0.06
+            ],
+            "ColorHex": "#212121",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fl_upper",
+            "ParentId": "leg_fl_joint",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0,
+                0.12
+            ],
+            "Rotation": [
+                -30,
+                0,
+                0
+            ],
+            "Scale": [
+                0.04,
+                0.04,
+                0.25
+            ],
+            "ColorHex": "#546E7A",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fl_knee",
+            "ParentId": "leg_fl_upper",
+            "Shape": "Cylinder",
+            "Position": [
+                0,
+                0,
+                0.13
+            ],
+            "Rotation": [
+                90,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.06,
+                0.05
+            ],
+            "ColorHex": "#212121",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fl_lower",
+            "ParentId": "leg_fl_knee",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.15,
+                0
+            ],
+            "Rotation": [
+                80,
+                0,
+                0
+            ],
+            "Scale": [
+                0.03,
+                0.3,
+                0.03
+            ],
+            "ColorHex": "#455A64",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fr_joint",
+            "ParentId": "chassis_core",
+            "Shape": "Sphere",
+            "Position": [
+                0.14,
+                -0.05,
+                0.14
+            ],
+            "Rotation": [
+                0,
+                -45,
+                0
+            ],
+            "Scale": [
+                0.06,
+                0.06,
+                0.06
+            ],
+            "ColorHex": "#212121",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fr_upper",
+            "ParentId": "leg_fr_joint",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0,
+                0.12
+            ],
+            "Rotation": [
+                -30,
+                0,
+                0
+            ],
+            "Scale": [
+                0.04,
+                0.04,
+                0.25
+            ],
+            "ColorHex": "#546E7A",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fr_knee",
+            "ParentId": "leg_fr_upper",
+            "Shape": "Cylinder",
+            "Position": [
+                0,
+                0,
+                0.13
+            ],
+            "Rotation": [
+                90,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.06,
+                0.05
+            ],
+            "ColorHex": "#212121",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_fr_lower",
+            "ParentId": "leg_fr_knee",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.15,
+                0
+            ],
+            "Rotation": [
+                80,
+                0,
+                0
+            ],
+            "Scale": [
+                0.03,
+                0.3,
+                0.03
+            ],
+            "ColorHex": "#455A64",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_bl_joint",
+            "ParentId": "chassis_core",
+            "Shape": "Sphere",
+            "Position": [
+                -0.14,
+                -0.05,
+                -0.14
+            ],
+            "Rotation": [
+                0,
+                135,
+                0
+            ],
+            "Scale": [
+                0.06,
+                0.06,
+                0.06
+            ],
+            "ColorHex": "#212121",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_bl_upper",
+            "ParentId": "leg_bl_joint",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0,
+                0.12
+            ],
+            "Rotation": [
+                -30,
+                0,
+                0
+            ],
+            "Scale": [
+                0.04,
+                0.04,
+                0.25
+            ],
+            "ColorHex": "#6D4C41",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_bl_knee",
+            "ParentId": "leg_bl_upper",
+            "Shape": "Cylinder",
+            "Position": [
+                0,
+                0,
+                0.13
+            ],
+            "Rotation": [
+                90,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.06,
+                0.05
+            ],
+            "ColorHex": "#212121",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_bl_lower",
+            "ParentId": "leg_bl_knee",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.15,
+                0
+            ],
+            "Rotation": [
+                80,
+                0,
+                0
+            ],
+            "Scale": [
+                0.03,
+                0.3,
+                0.03
+            ],
+            "ColorHex": "#455A64",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_br_joint",
+            "ParentId": "chassis_core",
+            "Shape": "Sphere",
+            "Position": [
+                0.14,
+                -0.05,
+                -0.14
+            ],
+            "Rotation": [
+                0,
+                -135,
+                0
+            ],
+            "Scale": [
+                0.06,
+                0.06,
+                0.06
+            ],
+            "ColorHex": "#212121",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_br_upper",
+            "ParentId": "leg_br_joint",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0,
+                0.12
+            ],
+            "Rotation": [
+                -30,
+                0,
+                0
+            ],
+            "Scale": [
+                0.04,
+                0.04,
+                0.25
+            ],
+            "ColorHex": "#6D4C41",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_br_knee",
+            "ParentId": "leg_br_upper",
+            "Shape": "Cylinder",
+            "Position": [
+                0,
+                0,
+                0.13
+            ],
+            "Rotation": [
+                90,
+                0,
+                0
+            ],
+            "Scale": [
+                0.05,
+                0.06,
+                0.05
+            ],
+            "ColorHex": "#212121",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_br_lower",
+            "ParentId": "leg_br_knee",
+            "Shape": "Box",
+            "Position": [
+                0,
+                -0.15,
+                0
+            ],
+            "Rotation": [
+                80,
+                0,
+                0
+            ],
+            "Scale": [
+                0.03,
+                0.3,
+                0.03
+            ],
+            "ColorHex": "#455A64",
+            "Material": "Metal",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

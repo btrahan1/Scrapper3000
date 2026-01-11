@@ -1,0 +1,46 @@
+{
+    "Name": "ScrapPlateVest",
+    "Stats": {
+        "DEF": 20,
+        "Price": 600,
+        "Description": "Literal metal plates strapped to your chest."
+    },
+    "Parts": [
+        {
+            "Id": "vest",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.5,
+                0.1,
+                0.4
+            ],
+            "ColorHex": "#333333",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "plate1",
+            "ParentId": "vest",
+            "Shape": "Box",
+            "Position": [
+                0,
+                0.06,
+                0
+            ],
+            "Scale": [
+                0.4,
+                0.02,
+                0.3
+            ],
+            "ColorHex": "#555555",
+            "Material": "Metal",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

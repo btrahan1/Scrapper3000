@@ -2,12 +2,26 @@
 @inject IJSRuntime JSRuntime
 @inject ScrapperStateService State
 @implements IDisposable
+@using System.Threading
 
 <PageTitle>Scrapper 3000</PageTitle>
 
-<div class="game-container">
+<div class="game-container" tabindex="0" @onkeydown="HandleGlobalKeydown" id="game-container">
     <canvas id="renderCanvas" class="game-canvas"></canvas>
 
+    @if (State.IsPaused)
+    {
+        <div class="pause-overlay">
+            <div class="pause-menu">
+                <div class="pause-header">GAME PAUSED</div>
+                <div class="pause-buttons">
+                    <button class="btn-pause" @onclick="State.TogglePause">RETURN TO GAME</button>
+                    <button class="btn-pause" @onclick="ManualSave">SAVE GAME</button>
+                    <button class="btn-pause" @onclick="State.ExitGame">EXIT TO MAIN MENU</button>
+                </div>
+            </div>
+        </div>
+    }
     @if (State.IsLoading)
     {
         <div class="loading-overlay">
@@ -25,6 +39,14 @@
                 <div class="landing-actions">
                     <button class="btn-primary" @onclick="ContinueJourney">CONTINUE JOURNEY</button>
                     <button class="btn-secondary" @onclick="State.StartNewGame">START NEW GAME</button>
+                    
+                    <div class="storage-toggle">
+                        <label>Storage Mode:</label>
+                        <select @onchange="OnStorageModeChange" value="@_storageMode">
+                            <option value="local">LocalStorage (Safe)</option>
+                            <option value="firebase">Cloud (Firestore)</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
@@ -73,6 +95,15 @@
     {
         <div class="hud">
             <div class="hud-item credits">💰 @State.Credits Credits</div>
+            <div class="hud-item stats-card">
+                <div class="stat"><span class="icon">❤️</span> @State.HP / @State.MaxHP</div>
+                <div class="stat"><span class="icon">⚔️</span> @State.AttackPower ATK</div>
+                <div class="stat"><span class="icon">🛡️</span> @State.Defense DEF</div>
+            </div>
+            <div class="hud-item gear-card">
+                <div class="gear-slot">⚔️ @State.EquippedWeapon</div>
+                <div class="gear-slot">🛡️ @State.EquippedArmor</div>
+            </div>
             <div class="hud-item dialogue-hud">@State.DialogueText</div>
         </div>
 
@@ -81,9 +112,13 @@
             <div class="backpack-list">
                 @foreach (var item in State.Inventory.Where(i => i.Value > 0))
                 {
-                    <div class="backpack-item">
+                    <div class="backpack-item @(State.EquippedWeapon == item.Key || State.EquippedArmor == item.Key ? "equipped" : "")">
                         <span class="item-name">@item.Key</span>
                         <span class="item-count"> x @(item.Value)</span>
+                        @if (State.EquippedWeapon == item.Key || State.EquippedArmor == item.Key)
+                        {
+                            <span class="equipped-tag">E</span>
+                        }
                     </div>
                 }
                 @if (!State.Inventory.Values.Any(v => v > 0))
@@ -102,15 +137,46 @@
                     <h2>SAM'S TRADE KIOSK</h2>
                     <button class="btn-close" @onclick="State.CloseShop">X</button>
                 </div>
+                <div class="shop-tabs">
+                    <button class="@(_shopTab == "sell" ? "active" : "")" @onclick='() => _shopTab = "sell"'>SELL MATERIALS</button>
+                    <button class="@(_shopTab == "buy" ? "active" : "")" @onclick='() => _shopTab = "buy"'>BUY GEAR</button>
+                </div>
                 <div class="shop-inventory">
-                    @foreach (var item in State.Inventory)
+                    @if (_shopTab == "sell")
                     {
-                        <div class="shop-row @(item.Value > 0 ? "" : "empty")">
-                            <span class="item-name">@item.Key</span>
-                            <span class="item-price">🪙 @(State.MaterialPrices[item.Key])</span>
-                            <span class="item-stock">OWNED: @item.Value</span>
-                            <button class="btn-sell" @onclick='() => State.SellItem(item.Key)' disabled="@(item.Value <= 0)">SELL 1</button>
-                        </div>
+                        @foreach (var item in State.Inventory)
+                        {
+                            <div class="shop-row @(item.Value > 0 ? "" : "empty")">
+                                <span class="item-name">@item.Key</span>
+                                <span class="item-price">🪙 @(State.MaterialPrices[item.Key])</span>
+                                <span class="item-stock">OWNED: @item.Value</span>
+                                <div class="sell-actions">
+                                    <button class="btn-sell" @onclick='() => State.SellItem(item.Key)' disabled="@(item.Value <= 0)">SELL 1</button>
+                                    <button class="btn-sell-all" @onclick='() => State.SellAll(item.Key)' disabled="@(item.Value <= 0)">SELL ALL</button>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        @foreach (var item in State.AvailableGear)
+                        {
+                            bool owned = State.OwnedGear.Contains(item.Name);
+                            bool equipped = State.EquippedWeapon == item.Name || State.EquippedArmor == item.Name;
+                            <div class="shop-row @(owned ? "owned" : "")">
+                                <span class="item-name">@item.Name <br/><small>@item.Description</small></span>
+                                <span class="item-price">💰 @item.Price</span>
+                                    <span class="item-stat">@(item.Type == "weapon" ? "ATK" : item.Type == "armor" ? "DEF" : "MK"): @item.Value</span>
+                                @if (owned)
+                                {
+                                    <button class="btn-buy" disabled>OWNED</button>
+                                }
+                                else
+                                {
+                                    <button class="btn-buy" @onclick="() => State.BuyItem(item.Name)" disabled="@(State.Credits < item.Price)">BUY</button>
+                                }
+                            </div>
+                        }
                     }
                 </div>
                 <div class="shop-footer">
@@ -136,6 +202,9 @@
 @code {
     private DotNetObjectReference<Home>? _objRef;
     private string _tempName = "";
+    private string _shopTab = "sell";
+    private string _storageMode = "local";
+    private CancellationTokenSource? _saveCts;
 
     private async Task ContinueJourney()
     {
@@ -149,17 +218,68 @@
         {
             _objRef = DotNetObjectReference.Create(this);
             
-            // Initialize Firebase (Assuming config is provided)
-            await JSRuntime.InvokeVoidAsync("FirebaseBridge.init", GetFirebaseConfig());
-            await JSRuntime.InvokeVoidAsync("FirebaseBridge.loadPlayerState", _objRef);
+            // Initialize Storage Bridge
+            await JSRuntime.InvokeVoidAsync("StorageBridge.setStorageMode", _storageMode);
+            await JSRuntime.InvokeVoidAsync("StorageBridge.init", GetFirebaseConfig());
+            await JSRuntime.InvokeVoidAsync("StorageBridge.loadPlayerState", _objRef);
 
             await JSRuntime.InvokeVoidAsync("Scrapper3000.init", _objRef, "renderCanvas");
-            State.OnUIChange += async () => {
-                Console.WriteLine($"[RAZOR] UI Update: N={State.IsNaming}, I={State.IntroComplete}, P={State.PlayerName}");
-                await InvokeAsync(StateHasChanged);
-                await JSRuntime.InvokeVoidAsync("FirebaseBridge.savePlayerState", State.GetSerializedState());
-            };
+            
+            // Initial Sync
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateStats", State.AttackPower);
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateGear", State.EquippedWeapon, State.EquippedArmor);
+
+            State.OnUIChange += HandleStateChange;
         }
+    }
+
+    private async void HandleStateChange()
+    {
+        await InvokeAsync(async () => 
+        {
+            Console.WriteLine($"[RAZOR] UI Update: N={State.IsNaming}, I={State.IntroComplete}, P={State.PlayerName}");
+            StateHasChanged();
+            
+            // Debounced Cloud Save
+            _saveCts?.Cancel();
+            _saveCts = new CancellationTokenSource();
+            var token = _saveCts.Token;
+            
+            _ = Task.Run(async () => {
+                try {
+                    await Task.Delay(5000, token);
+                    if (!token.IsCancellationRequested) {
+                        try 
+                        {
+                            await JSRuntime.InvokeVoidAsync("StorageBridge.savePlayerState", State.GetSerializedState());
+                            Console.WriteLine($"[RAZOR] State Saved ({_storageMode}).");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("[RAZOR] Save Error: " + ex.Message);
+                        }
+                    }
+                } catch (TaskCanceledException) {}
+            });
+
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateStats", State.AttackPower);
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateGear", State.EquippedWeapon, State.EquippedArmor);
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.setPaused", State.IsPaused);
+        });
+    }
+
+    private void HandleGlobalKeydown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            State.TogglePause();
+        }
+    }
+
+    private async Task ManualSave()
+    {
+        await JSRuntime.InvokeVoidAsync("StorageBridge.savePlayerState", State.GetSerializedState());
+        State.SetDialogue("Game progress saved.");
     }
 
     private string GetFirebaseConfig()
@@ -176,7 +296,13 @@
     }
 
     [JSInvokable]
-    public void OnPlayerStateLoaded(string stateJson)
+    public async Task RequestWhack()
+    {
+        await JSRuntime.InvokeVoidAsync("Scrapper3000.whack", null, State.AttackPower);
+    }
+
+    [JSInvokable]
+    public void OnPlayerStateLoaded(string? stateJson)
     {
         State.LoadFromState(stateJson);
         StateHasChanged();
@@ -224,6 +350,20 @@
     public void CloseShop() => State.CloseShop();
 
     [JSInvokable]
+    public void TakeDamage(int damage)
+    {
+        State.TakeDamage(damage);
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void HealPlayer()
+    {
+        State.HealPlayer();
+        StateHasChanged();
+    }
+
+    [JSInvokable]
     public void SellItem(string material) => State.SellItem(material);
 
     private async Task SetGender(string gender)
@@ -256,6 +396,12 @@
         State.SetDialogue("Now, get on out there and start collecting some scrap!");
     }
 
+    private async Task OnStorageModeChange(ChangeEventArgs e)
+    {
+        _storageMode = e.Value?.ToString() ?? "local";
+        await JSRuntime.InvokeVoidAsync("StorageBridge.setStorageMode", _storageMode);
+    }
+
     private void ConfirmName()
     {
         if (!string.IsNullOrWhiteSpace(_tempName))
@@ -267,7 +413,9 @@
 
     public void Dispose()
     {
-        State.OnUIChange -= StateHasChanged;
+        State.OnUIChange -= HandleStateChange;
+        _saveCts?.Cancel();
+        _saveCts?.Dispose();
         _objRef?.Dispose();
     }
 }
@@ -345,7 +493,7 @@
     /* Backpack HUD */
     .backpack-hud {
         position: absolute;
-        top: 100px;
+        top: 210px;
         left: 20px;
         width: 180px;
         background: rgba(15, 15, 20, 0.85);
@@ -518,6 +666,49 @@
         text-align: center;
     }
 
+    .equipped-tag {
+        background: #00ff66;
+        color: black;
+        font-size: 0.6rem;
+        padding: 1px 4px;
+        border-radius: 2px;
+        font-weight: bold;
+    }
+
+    /* Stats Card */
+    .stats-card {
+        display: flex;
+        gap: 15px;
+        background: rgba(0,0,0,0.4) !important;
+        border: 1px solid #444;
+    }
+
+    .stat {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-family: 'Courier New', monospace;
+    }
+
+    .stat .icon {
+        font-size: 1rem;
+    }
+
+    /* Gear Card */
+    .gear-card {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        background: rgba(40, 40, 60, 0.4) !important;
+        border: 1px solid #00ff6633;
+    }
+
+    .gear-slot {
+        font-size: 0.8rem;
+        color: #ddd;
+        font-family: 'Courier New', monospace;
+    }
+
     .naming-box button {
         background: #ff9900;
         color: black;
@@ -601,6 +792,83 @@
         display: flex;
         flex-direction: column;
         gap: 15px;
+        margin-top: 30px;
+    }
+
+    /* Pause Menu */
+    .pause-overlay {
+        position: absolute;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(5px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 5000;
+    }
+
+    .pause-menu {
+        background: #111;
+        border: 2px solid #555;
+        padding: 40px;
+        border-radius: 8px;
+        width: 350px;
+        text-align: center;
+        box-shadow: 0 0 30px rgba(0,255,102,0.1);
+    }
+
+    .pause-header {
+        color: #00ff66;
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 30px;
+        letter-spacing: 2px;
+    }
+
+    .pause-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .btn-pause {
+        background: #222;
+        color: white;
+        border: 1px solid #444;
+        padding: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-pause:hover {
+        background: #00ff66;
+        color: black;
+        border-color: #00ff66;
+        transform: translateY(-2px);
+    }
+
+    .storage-toggle {
+        margin-top: 10px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-size: 0.8rem;
+    }
+
+    .storage-toggle select {
+        background: #333;
+        color: white;
+        border: 1px solid #555;
+        padding: 4px;
+        border-radius: 4px;
     }
 
     .btn-primary {
@@ -674,6 +942,29 @@
         letter-spacing: 2px;
     }
 
+    .shop-tabs {
+        display: flex;
+        background: #222;
+        border-bottom: 2px solid #333;
+    }
+
+    .shop-tabs button {
+        flex: 1;
+        padding: 12px;
+        background: transparent;
+        border: none;
+        color: #666;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+    }
+
+    .shop-tabs button.active {
+        color: #00ff66;
+        background: #1a1a1f;
+        border-bottom: 2px solid #00ff66;
+    }
+
     .btn-close {
         background: #555;
         border: none;
@@ -692,13 +983,29 @@
 
     .shop-row {
         display: grid;
-        grid-template-columns: 1fr 80px 100px 100px;
+        grid-template-columns: 1.2fr 80px 80px 180px;
         align-items: center;
         padding: 12px;
         background: rgba(40, 40, 50, 0.5);
         margin-bottom: 8px;
         border-radius: 6px;
         border: 1px solid #333;
+    }
+
+    .sell-actions {
+        display: flex;
+        gap: 5px;
+    }
+
+    .shop-row.owned {
+        border-color: #00ff6633;
+        background: rgba(0, 255, 102, 0.05);
+    }
+
+    .shop-row small {
+        display: block;
+        color: #666;
+        font-size: 0.7rem;
     }
 
     .shop-row.empty {
@@ -710,12 +1017,17 @@
         font-weight: bold;
     }
 
-    .item-stock {
+    .item-stock, .item-stat {
         font-size: 0.8rem;
         color: #aaa;
     }
 
-    .btn-sell {
+    .item-stat {
+        color: #00ff66;
+        font-weight: bold;
+    }
+
+    .btn-sell, .btn-buy, .btn-sell-all {
         background: #00ff66;
         color: black;
         border: none;
@@ -723,9 +1035,15 @@
         border-radius: 4px;
         font-weight: bold;
         cursor: pointer;
+        flex: 1;
+        font-size: 0.7rem;
     }
 
-    .btn-sell:disabled {
+    .btn-sell-all {
+        background: #ffcc00;
+    }
+
+    .btn-sell:disabled, .btn-buy:disabled, .btn-sell-all:disabled {
         background: #444;
         color: #888;
         cursor: not-allowed;

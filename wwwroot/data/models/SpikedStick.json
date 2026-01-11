@@ -1,0 +1,74 @@
+{
+    "Name": "SpikedStick",
+    "Stats": {
+        "ATK": 3,
+        "Price": 150,
+        "Description": "A stick with some nasty nails in it."
+    },
+    "Parts": [
+        {
+            "Id": "body",
+            "Shape": "Cylinder",
+            "Position": [
+                0,
+                0.75,
+                0
+            ],
+            "Scale": [
+                0.06,
+                1.5,
+                0.06
+            ],
+            "ColorHex": "#4b301a",
+            "Material": "Wood",
+            "Operation": "Union"
+        },
+        {
+            "Id": "spike1",
+            "ParentId": "body",
+            "Shape": "Cone",
+            "Position": [
+                0.05,
+                0.5,
+                0
+            ],
+            "Rotation": [
+                0,
+                0,
+                -90
+            ],
+            "Scale": [
+                0.05,
+                0.1,
+                0.05
+            ],
+            "ColorHex": "#aaaaaa",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "spike2",
+            "ParentId": "body",
+            "Shape": "Cone",
+            "Position": [
+                -0.05,
+                0.4,
+                0.03
+            ],
+            "Rotation": [
+                0,
+                0,
+                90
+            ],
+            "Scale": [
+                0.05,
+                0.1,
+                0.05
+            ],
+            "ColorHex": "#aaaaaa",
+            "Material": "Metal",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}
