@@ -1,0 +1,58 @@
+{
+    "name": "ScrapPile",
+    "parts": [
+        {
+            "name": "base_junk",
+            "type": "box",
+            "width": 1.2,
+            "height": 0.4,
+            "depth": 1.2,
+            "position": {
+                "x": 0,
+                "y": 0.2,
+                "z": 0
+            },
+            "color": {
+                "r": 0.4,
+                "g": 0.35,
+                "b": 0.3
+            }
+        },
+        {
+            "name": "rusty_pipe",
+            "type": "cylinder",
+            "height": 1.5,
+            "diameter": 0.2,
+            "position": {
+                "x": 0.3,
+                "y": 0.5,
+                "z": 0.3
+            },
+            "rotation": {
+                "x": 0.5,
+                "y": 0.8,
+                "z": 1.2
+            },
+            "color": {
+                "r": 0.5,
+                "g": 0.2,
+                "b": 0.1
+            }
+        },
+        {
+            "name": "dolly_wheel",
+            "type": "sphere",
+            "diameter": 0.4,
+            "position": {
+                "x": -0.4,
+                "y": 0.2,
+                "z": -0.4
+            },
+            "color": {
+                "r": 0.1,
+                "g": 0.1,
+                "b": 0.1
+            }
+        }
+    ]
+}

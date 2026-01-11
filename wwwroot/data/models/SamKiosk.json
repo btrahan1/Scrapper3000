@@ -1,0 +1,90 @@
+{
+    "name": "SamKiosk",
+    "parts": [
+        {
+            "name": "counter",
+            "type": "box",
+            "width": 2.5,
+            "height": 1.0,
+            "depth": 1.5,
+            "position": {
+                "x": 0,
+                "y": 0.5,
+                "z": 0
+            },
+            "color": {
+                "r": 0.3,
+                "g": 0.3,
+                "b": 0.35
+            }
+        },
+        {
+            "name": "roof",
+            "type": "box",
+            "width": 3.0,
+            "height": 0.2,
+            "depth": 2.0,
+            "position": {
+                "x": 0,
+                "y": 2.2,
+                "z": 0
+            },
+            "color": {
+                "r": 0.8,
+                "g": 0.7,
+                "b": 0.1
+            }
+        },
+        {
+            "name": "pillar_l",
+            "type": "box",
+            "width": 0.1,
+            "height": 2.2,
+            "depth": 0.1,
+            "position": {
+                "x": -1.2,
+                "y": 1.1,
+                "z": 0.8
+            },
+            "color": {
+                "r": 0.2,
+                "g": 0.2,
+                "b": 0.2
+            }
+        },
+        {
+            "name": "pillar_r",
+            "type": "box",
+            "width": 0.1,
+            "height": 2.2,
+            "depth": 0.1,
+            "position": {
+                "x": 1.2,
+                "y": 1.1,
+                "z": 0.8
+            },
+            "color": {
+                "r": 0.2,
+                "g": 0.2,
+                "b": 0.2
+            }
+        },
+        {
+            "name": "sign",
+            "type": "box",
+            "width": 1.5,
+            "height": 0.4,
+            "depth": 0.1,
+            "position": {
+                "x": 0,
+                "y": 2.5,
+                "z": 1.0
+            },
+            "color": {
+                "r": 0.1,
+                "g": 0.9,
+                "b": 0.2
+            }
+        }
+    ]
+}

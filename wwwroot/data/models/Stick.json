@@ -1,0 +1,11 @@
+{
+    "name": "ScrapperStick",
+    "type": "cylinder",
+    "height": 1.2,
+    "diameter": 0.08,
+    "color": {
+        "r": 0.4,
+        "g": 0.3,
+        "b": 0.2
+    }
+}

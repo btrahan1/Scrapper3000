@@ -1,0 +1,12 @@
+{
+    "name": "ScrapperBackpack",
+    "type": "box",
+    "width": 0.4,
+    "height": 0.6,
+    "depth": 0.2,
+    "color": {
+        "r": 0.3,
+        "g": 0.2,
+        "b": 0.1
+    }
+}

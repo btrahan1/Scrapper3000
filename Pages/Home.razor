@@ -1,0 +1,468 @@
+﻿@page "/"
+@inject IJSRuntime JSRuntime
+@inject ScrapperStateService State
+@implements IDisposable
+
+<PageTitle>Scrapper 3000</PageTitle>
+
+<div class="game-container">
+    <canvas id="renderCanvas" class="game-canvas"></canvas>
+
+    @if (State.IsCustomizing)
+    {
+        <div class="customization-panel">
+            <h3>Refine Your Look</h3>
+            <div class="option-group">
+                <label>Gender</label>
+                <div class="btn-group">
+                    <button class="@(State.Gender == "Male" ? "active" : "")" @onclick='() => SetGender("Male")'>Male</button>
+                    <button class="@(State.Gender == "Female" ? "active" : "")" @onclick='() => SetGender("Female")'>Female</button>
+                </div>
+            </div>
+
+            <div class="option-group">
+                <label>Hair Length</label>
+                <input type="range" min="0" max="1" step="0.1" value="@State.HairLength" @oninput="UpdateHairLength" />
+            </div>
+
+            <div class="option-group">
+                <label>Hair Color</label>
+                <input type="color" value="@State.HairColor" @oninput="UpdateHairColor" />
+            </div>
+
+            <button class="btn-confirm" @onclick="FinishCustomization">Confirm & Exit Shed</button>
+        </div>
+    }
+
+    @if (!State.IntroComplete && !State.IsCustomizing)
+    {
+        <div class="intro-overlay">
+            <div class="dialogue-box">
+                <p>@State.DialogueText</p>
+                <div class="equipment-status">
+                    <span class="@(State.HasBackpack ? "equipped" : "")">🎒 Backpack</span>
+                    <span class="@(State.HasOveralls ? "equipped" : "")">👖 Overalls</span>
+                    <span class="@(State.HasStick ? "equipped" : "")">🪵 Stick</span>
+                </div>
+            </div>
+        </div>
+    }
+    else if (State.IntroComplete)
+    {
+        <div class="hud">
+            <div class="hud-item credits">💰 @State.Credits Credits</div>
+            <div class="hud-item dialogue-hud">@State.DialogueText</div>
+        </div>
+
+        <div class="backpack-hud">
+            <div class="backpack-header">🎒 BACKPACK contents</div>
+            <div class="backpack-list">
+                @foreach (var item in State.Inventory.Where(i => i.Value > 0))
+                {
+                    <div class="backpack-item">
+                        <span class="item-name">@item.Key</span>
+                        <span class="item-count"> x @(item.Value)</span>
+                    </div>
+                }
+                @if (!State.Inventory.Values.Any(v => v > 0))
+                {
+                    <div class="backpack-empty">Empty</div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (State.IsNaming || (State.IntroComplete && State.PlayerName == "Scrapper"))
+    {
+        <div class="naming-overlay">
+            <div class="naming-box">
+                <h2>Welcome to the Junkyard</h2>
+                <p>What is your name, scrapper?</p>
+                <input @bind="_tempName" placeholder="Enter name..." @onkeydown="@(e => { if(e.Key == "Enter") ConfirmName(); })" />
+                <button @onclick="ConfirmName">Begin Journey</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private DotNetObjectReference<Home>? _objRef;
+    private string _tempName = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _objRef = DotNetObjectReference.Create(this);
+            
+            // Initialize Firebase (Assuming config is provided)
+            await JSRuntime.InvokeVoidAsync("FirebaseBridge.init", GetFirebaseConfig());
+            await JSRuntime.InvokeVoidAsync("FirebaseBridge.loadPlayerState", _objRef);
+
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.init", _objRef, "renderCanvas");
+            State.OnUIChange += async () => {
+                Console.WriteLine($"[RAZOR] UI Update: N={State.IsNaming}, I={State.IntroComplete}, P={State.PlayerName}");
+                await InvokeAsync(StateHasChanged);
+                await JSRuntime.InvokeVoidAsync("FirebaseBridge.savePlayerState", State.GetSerializedState());
+            };
+        }
+    }
+
+    private string GetFirebaseConfig()
+    {
+        return @"{
+            ""apiKey"": ""AIzaSyCRyw6dcixXbGAJN_ge2LqX5f2EVprcRPo"",
+            ""authDomain"": ""scrapper3000.firebaseapp.com"",
+            ""projectId"": ""scrapper3000"",
+            ""storageBucket"": ""scrapper3000.firebasestorage.app"",
+            ""messagingSenderId"": ""363115569481"",
+            ""appId"": ""1:363115569481:web:f35184fd75600990f2ba98"",
+            ""measurementId"": ""G-TC1LGPCT78""
+        }"; 
+    }
+
+    [JSInvokable]
+    public void OnPlayerStateLoaded(string stateJson)
+    {
+        State.LoadFromState(stateJson);
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task OnItemPickedUp(string itemType)
+    {
+        bool alreadyComplete = State.IntroComplete;
+        bool alreadyCustomizing = State.IsCustomizing;
+
+        // Check if it's equipment or a material
+        if (new List<string> { "backpack", "overalls", "stick" }.Contains(itemType.ToLower()))
+        {
+            State.EquipItem(itemType);
+        }
+        else
+        {
+            State.AddInventory(itemType, 1);
+        }
+        
+        if (!alreadyCustomizing && State.IsCustomizing)
+        {
+            // Transition to mirror view for customization
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.switchToThirdPerson", State.Gender, State.HairLength, State.HairColor);
+        }
+
+        if (!alreadyComplete && State.IntroComplete)
+        {
+            // Already handled in CompleteCustomization, but safe-guard
+        }
+    }
+
+    [JSInvokable]
+    public void SetDialogue(string message)
+    {
+        State.SetDialogue(message);
+        StateHasChanged();
+    }
+
+    private async Task SetGender(string gender)
+    {
+        State.UpdateCustomization(gender, State.HairLength, State.HairColor);
+        await JSRuntime.InvokeVoidAsync("Scrapper3000.updateAvatar", State.Gender, State.HairLength, State.HairColor);
+    }
+
+    private async Task UpdateHairLength(ChangeEventArgs e)
+    {
+        if (float.TryParse(e.Value?.ToString(), out float length))
+        {
+            State.UpdateCustomization(State.Gender, length, State.HairColor);
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateHair", State.HairLength, State.HairColor);
+        }
+    }
+
+    private async Task UpdateHairColor(ChangeEventArgs e)
+    {
+        State.UpdateCustomization(State.Gender, State.HairLength, e.Value?.ToString() ?? State.HairColor);
+        await JSRuntime.InvokeVoidAsync("Scrapper3000.updateHair", State.HairLength, State.HairColor);
+    }
+
+    private async Task FinishCustomization()
+    {
+        State.CompleteCustomization();
+        await InvokeAsync(StateHasChanged); 
+        
+        await JSRuntime.InvokeVoidAsync("Scrapper3000.exitShed");
+        State.SetDialogue("Now, get on out there and start collecting some scrap!");
+    }
+
+    private void ConfirmName()
+    {
+        if (!string.IsNullOrWhiteSpace(_tempName))
+        {
+            State.SetPlayerName(_tempName);
+            State.SetDialogue($"Welcome, {State.PlayerName}. Time to find some scrap.");
+        }
+    }
+
+    public void Dispose()
+    {
+        State.OnUIChange -= StateHasChanged;
+        _objRef?.Dispose();
+    }
+}
+
+<style>
+    .game-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+        overflow: hidden;
+    }
+
+    .game-canvas {
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+    }
+
+    .intro-overlay {
+        position: absolute;
+        bottom: 10%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        max-width: 600px;
+        pointer-events: none;
+    }
+
+    .dialogue-box {
+        background: rgba(0, 0, 0, 0.85);
+        border: 2px solid #555;
+        border-radius: 8px;
+        padding: 20px;
+        color: #eee;
+        font-family: 'Courier New', Courier, monospace;
+        text-align: center;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .equipment-status {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 15px;
+        font-weight: bold;
+    }
+
+    .equipment-status span {
+        opacity: 0.3;
+        transition: 0.5s;
+    }
+
+    .equipment-status span.equipped {
+        opacity: 1;
+        color: #00ff00;
+        text-shadow: 0 0 10px #00ff00;
+    }
+
+    .hud {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        color: white;
+        pointer-events: none;
+    }
+
+    .credits {
+        font-size: 1.5rem;
+        background: rgba(0,0,0,0.5);
+        padding: 5px 15px;
+        border-radius: 5px;
+        border-left: 4px solid #00ff66;
+    }
+
+    /* Backpack HUD */
+    .backpack-hud {
+        position: absolute;
+        top: 100px;
+        left: 20px;
+        width: 180px;
+        background: rgba(15, 15, 20, 0.85);
+        border: 2px solid #444;
+        border-radius: 8px;
+        overflow: hidden;
+        font-family: 'Courier New', monospace;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        pointer-events: none;
+        animation: slideInLeft 0.5s ease-out;
+    }
+
+    .backpack-header {
+        background: #333;
+        color: #ff9900;
+        padding: 8px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        font-weight: bold;
+        text-align: center;
+        border-bottom: 2px solid #444;
+        letter-spacing: 1px;
+    }
+
+    .backpack-list {
+        padding: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .backpack-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px solid #222;
+        color: #ccc;
+        font-size: 0.9rem;
+        animation: fadeInItem 0.3s ease-in;
+    }
+
+    .backpack-item:last-child {
+        border-bottom: none;
+    }
+
+    .item-name {
+        color: #eee;
+    }
+
+    .item-count {
+        color: #00ff66;
+        font-weight: bold;
+    }
+
+    .backpack-empty {
+        text-align: center;
+        color: #555;
+        font-style: italic;
+        padding: 10px 0;
+    }
+
+    @@keyframes slideInLeft {
+        from { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    @@keyframes fadeInItem {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .customization-panel {
+        position: absolute;
+        right: 5%;
+        top: 10%;
+        width: 300px;
+        background: rgba(20, 20, 25, 0.9);
+        border: 2px solid #444;
+        padding: 20px;
+        color: #ddd;
+        font-family: 'Courier New', monospace;
+        border-radius: 10px;
+    }
+
+    .customization-panel h3 {
+        color: #ff9900;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .option-group {
+        margin-bottom: 20px;
+    }
+
+    .option-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-group button {
+        flex: 1;
+        background: #333;
+        border: 1px solid #555;
+        color: white;
+        padding: 8px;
+        cursor: pointer;
+    }
+
+    .btn-group button.active {
+        background: #ff9900;
+        color: black;
+        border-color: #ffd200;
+    }
+
+    .btn-confirm {
+        width: 100%;
+        padding: 12px;
+        background: #00ff66;
+        color: black;
+        border: none;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 20px;
+    }
+
+    .btn-confirm:hover {
+        background: #00cc55;
+    }
+
+    .naming-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        pointer-events: auto;
+    }
+
+    .naming-box {
+        background: #2a2a30;
+        border: 2px solid #ff9900;
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        box-shadow: 0 0 30px rgba(255, 153, 0, 0.3);
+    }
+
+    .naming-box h2 {
+        color: #ff9900;
+        margin-bottom: 10px;
+    }
+
+    .naming-box input {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin: 20px 0;
+        background: #111;
+        border: 1px solid #444;
+        color: white;
+        font-size: 1.2rem;
+        text-align: center;
+    }
+
+    .naming-box button {
+        background: #ff9900;
+        color: black;
+        border: none;
+        padding: 12px 30px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 1.1rem;
+        border-radius: 5px;
+    }
+</style>
