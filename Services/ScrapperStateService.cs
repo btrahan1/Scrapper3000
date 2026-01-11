@@ -24,13 +24,16 @@ namespace Scrapper3000.Services
         public string HairColor { get; private set; } = "#4b301a"; // Dark Brown
         public string PlayerName { get; private set; } = "Scrapper";
         public bool IsNaming { get; private set; } = false;
+        public bool IsShopOpen { get; private set; } = false;
+        public bool IsLandingPage { get; private set; } = false;
+        public bool IsLoading { get; private set; } = true;
+        public bool HasExistingSave { get; private set; } = false;
 
         // --- Equipment ---
         public bool HasBackpack { get; private set; } = false;
         public bool HasOveralls { get; private set; } = false;
         public bool HasStick { get; private set; } = false;
 
-        // --- Inventory ---
         public Dictionary<string, int> Inventory { get; private set; } = new()
         {
             { "Rubber", 0 },
@@ -38,6 +41,15 @@ namespace Scrapper3000.Services
             { "Wood", 0 },
             { "Cloth", 0 },
             { "Metal", 0 }
+        };
+
+        public Dictionary<string, int> MaterialPrices { get; private set; } = new()
+        {
+            { "Rubber", 5 },
+            { "Plastic", 8 },
+            { "Wood", 10 },
+            { "Cloth", 12 },
+            { "Metal", 25 }
         };
 
         public void AddCredits(int amount)
@@ -93,6 +105,27 @@ namespace Scrapper3000.Services
             SaveState();
         }
 
+        public void StartNewGame()
+        {
+            // Reset gameplay state but keep customization if desired (or reset all)
+            Credits = 0;
+            Inventory = new Dictionary<string, int> { { "Rubber", 0 }, { "Plastic", 0 }, { "Wood", 0 }, { "Cloth", 0 }, { "Metal", 0 } };
+            HasBackpack = false;
+            HasOveralls = false;
+            HasStick = false;
+            IntroComplete = false;
+            IsFirstPerson = true;
+            IsLandingPage = false;
+            PlayerName = "Scrapper";
+            NotifyUIChange();
+        }
+
+        public void ContinueGame()
+        {
+            IsLandingPage = false;
+            NotifyUIChange();
+        }
+
         public void SetPlayerName(string name)
         {
             if (!string.IsNullOrWhiteSpace(name))
@@ -112,6 +145,29 @@ namespace Scrapper3000.Services
                 NotifyUIChange();
                 SaveState();
             }
+        }
+
+        public void SellItem(string material)
+        {
+            if (Inventory.ContainsKey(material) && Inventory[material] > 0)
+            {
+                Inventory[material]--;
+                Credits += MaterialPrices[material];
+                NotifyUIChange();
+                SaveState();
+            }
+        }
+
+        public void OpenShop()
+        {
+            IsShopOpen = true;
+            NotifyUIChange();
+        }
+
+        public void CloseShop()
+        {
+            IsShopOpen = false;
+            NotifyUIChange();
         }
 
         public string GetSerializedState()
@@ -154,12 +210,22 @@ namespace Scrapper3000.Services
                     HairColor = state.HairColor ?? HairColor;
                     PlayerName = state.PlayerName ?? PlayerName;
 
-                    // If they are outside but haven't named themselves, show the dialog
-                    if (IntroComplete && PlayerName == "Scrapper")
+                    IsLoading = false;
+                    if (IntroComplete && PlayerName != "Scrapper")
+                    {
+                        HasExistingSave = true;
+                        IsLandingPage = true;
+                    }
+                    else if (IntroComplete && PlayerName == "Scrapper")
                     {
                         IsNaming = true;
                     }
 
+                    NotifyUIChange();
+                }
+                else
+                {
+                    IsLoading = false;
                     NotifyUIChange();
                 }
             }

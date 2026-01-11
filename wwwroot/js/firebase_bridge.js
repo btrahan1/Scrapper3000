@@ -39,6 +39,7 @@ window.FirebaseBridge = {
                 console.log("Player state loaded from Firestore.");
             } else {
                 console.log("No player found, starting fresh.");
+                await dotNetHelper.invokeMethodAsync('OnPlayerStateLoaded', null);
             }
         } catch (e) {
             console.error("Error loading state:", e);

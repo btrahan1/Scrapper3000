@@ -9,6 +9,7 @@ window.Scrapper3000 = {
     player: null,
     keys: {},
     isWhacking: false,
+    playerLimbs: {},
 
     init: function (dotNetHelper, canvasId) {
         this.dotNetHelper = dotNetHelper;
@@ -183,6 +184,15 @@ window.Scrapper3000 = {
         }
     },
 
+    jumpToJunkyard: async function (gender, hairLength, hairColor) {
+        console.log("Scrapper 3000: Jumping to Junkyard...");
+        await this.switchToThirdPerson(gender, hairLength, hairColor);
+        this.spawnJunkyard();
+        if (this.player) {
+            this.player.position = new BABYLON.Vector3(0, 0.1, 15);
+        }
+    },
+
     spawnJunkyard: function () {
         // Expand the ground
         var ground = this.scene.getMeshByName("ground");
@@ -236,6 +246,8 @@ window.Scrapper3000 = {
             if (kiosk) {
                 kiosk.position = new BABYLON.Vector3(5, 0, 15);
                 kiosk.rotation.y = -Math.PI / 4;
+                kiosk.name = "SamKiosk";
+                this.setupSamKiosk(kiosk);
             }
         });
 
@@ -250,6 +262,38 @@ window.Scrapper3000 = {
         }
 
         console.log("Scrapper 3000: Junkyard Generated.");
+    },
+
+    setupSamKiosk: function (kiosk) {
+        kiosk.getChildMeshes().forEach(m => {
+            m.isInteractable = true;
+            m.actionManager = new BABYLON.ActionManager(this.scene);
+
+            m.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, () => {
+                m.renderOutline = true;
+                m.outlineColor = new BABYLON.Color3(0, 1, 0.5);
+                m.outlineWidth = 0.05;
+            }));
+            m.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, () => {
+                m.renderOutline = false;
+            }));
+
+            m.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
+                const dist = BABYLON.Vector3.Distance(this.player.position, kiosk.position);
+                if (dist < 5) {
+                    this.dotNetHelper.invokeMethodAsync('OpenShop');
+                } else {
+                    this.dotNetHelper.invokeMethodAsync('SetDialogue', "Go talk to Sam! He's at the kiosk.");
+                }
+            }));
+        });
+
+        // Auto-close shop if we walk away
+        const obs = this.scene.onBeforeRenderObservable.add(() => {
+            if (this.player && BABYLON.Vector3.Distance(this.player.position, kiosk.position) > 8) {
+                this.dotNetHelper.invokeMethodAsync('CloseShop');
+            }
+        });
     },
 
     setupScrapPile: function (pile) {
@@ -378,6 +422,7 @@ window.Scrapper3000 = {
         camera.upperRadiusLimit = 10;
 
         this.camera = camera;
+        this.cachePlayerLimbs();
 
         // 5. Cleanup Old Camera
         if (oldCamera) {
@@ -440,14 +485,7 @@ window.Scrapper3000 = {
     animateWalk: function (dt, isMoving) {
         if (!this.player) return;
 
-        const children = this.player.getChildMeshes();
-        const limbs = {
-            legL: children.find(m => m.name.includes("leg_l")),
-            legR: children.find(m => m.name.includes("leg_r")),
-            armL: children.find(m => m.name.includes("arm_l")),
-            armR: children.find(m => m.name.includes("arm_r")),
-            torso: children.find(m => m.name.includes("torso"))
-        };
+        const limbs = this.playerLimbs;
 
         if (isMoving) {
             this.animTimer += dt * 10;
@@ -486,8 +524,7 @@ window.Scrapper3000 = {
 
         console.log("Scrapper 3000: WHACK!");
 
-        const children = this.player.getChildMeshes();
-        const armR = children.find(m => m.name.includes("arm_r"));
+        const armR = this.playerLimbs.armR;
 
         if (armR) {
             this.scene.stopAnimation(armR);
@@ -627,7 +664,21 @@ window.Scrapper3000 = {
         }
 
         this.player = newPlayer;
+        this.cachePlayerLimbs();
         oldPlayer.dispose();
+    },
+
+    cachePlayerLimbs: function () {
+        if (!this.player) return;
+        const children = this.player.getChildMeshes();
+        this.playerLimbs = {
+            legL: children.find(m => m.name.includes("leg_l")),
+            legR: children.find(m => m.name.includes("leg_r")),
+            armL: children.find(m => m.name.includes("arm_l")),
+            armR: children.find(m => m.name.includes("arm_r")),
+            torso: children.find(m => m.name.includes("torso"))
+        };
+        console.log("Scrapper 3000: Limbs cached.");
     },
 
     updateHair: function (length, color) {
