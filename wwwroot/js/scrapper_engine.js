@@ -243,7 +243,13 @@ window.Scrapper3000 = {
     },
 
     // UI Updates (Visual only, engine doesn't use these but C# expects them to exist)
-    updateStats: function (atk) { /* No-op or Visual */ },
+    updateStats: function (atk, def) {
+        if (this.player) {
+            this.player.attackPower = atk || 10;
+            this.player.defense = def || 0;
+            console.log(`Stats Updated: ATK=${atk}, DEF=${def}`);
+        }
+    },
 
     exitShed: function () {
         if (this.player && this.player.mesh) {

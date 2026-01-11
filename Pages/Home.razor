@@ -260,7 +260,7 @@
             await JSRuntime.InvokeVoidAsync("Scrapper3000.init", _objRef, "renderCanvas");
             
             // Initial Sync
-            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateStats", State.AttackPower);
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateStats", State.AttackPower, State.Defense);
             await JSRuntime.InvokeVoidAsync("Scrapper3000.updateGear", State.EquippedWeapon, State.EquippedArmor);
 
             State.OnStateChanged += HandleSaveTrigger; 
@@ -297,7 +297,7 @@
         await InvokeAsync(async () => 
         {
             StateHasChanged();
-            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateStats", State.AttackPower);
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateStats", State.AttackPower, State.Defense);
             await JSRuntime.InvokeVoidAsync("Scrapper3000.updateGear", State.EquippedWeapon, State.EquippedArmor);
             await JSRuntime.InvokeVoidAsync("Scrapper3000.setPaused", State.IsPaused);
         });

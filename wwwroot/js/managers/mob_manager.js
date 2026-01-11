@@ -17,7 +17,11 @@ class MobManager {
         // 1. Check for Mobs
         const isValidMob = this.rats.includes(mob) || this.wolves.includes(mob);
         if (isValidMob) {
-            this.damageMob(mob, 10);
+            // Use player's attack power from stats
+            const playerATK = data.attackPower || 10; // Fallback to 10
+            const mobDEF = (mob.stats && mob.stats.DEF) || 0;
+            const damage = Math.max(1, playerATK - Math.floor(mobDEF / 2));
+            this.damageMob(mob, damage);
             return;
         }
 
@@ -39,13 +43,62 @@ class MobManager {
         this.showFloatingDamage(point, "SMASH", "#cccccc");
 
         if (pile.stats.HP <= 0) {
-            // Loot Drop Logic (Simplified)
             this.showFloatingDamage(pile.position, "RESOURCES FOUND", "#00ff66");
+
+            // Spawn 1-3 physical loot items
+            const count = Math.floor(Math.random() * 3) + 1;
             const items = ["Iron", "Copper", "Plastic"];
-            const loot = items[Math.floor(Math.random() * items.length)];
-            this.dotNetHelper.invokeMethodAsync('OnItemPickedUp', loot);
+
+            for (let i = 0; i < count; i++) {
+                const loot = items[Math.floor(Math.random() * items.length)];
+                this.spawnLootBox(pile.position, loot);
+            }
+
             pile.dispose();
         }
+    }
+
+    spawnLootBox(pos, itemType) {
+        const box = BABYLON.MeshBuilder.CreateBox("loot_" + itemType, { size: 0.3 }, this.scene);
+        box.position = pos.clone();
+        box.position.y = 0.3;
+
+        // Random scatter
+        box.position.x += (Math.random() - 0.5) * 1.5;
+        box.position.z += (Math.random() - 0.5) * 1.5;
+
+        // Color based on type
+        const mat = new BABYLON.StandardMaterial("loot_mat", this.scene);
+        if (itemType === "Iron") mat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+        else if (itemType === "Copper") mat.diffuseColor = new BABYLON.Color3(0.8, 0.5, 0.2);
+        else mat.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.8);
+        mat.emissiveColor = mat.diffuseColor.scale(0.3);
+        box.material = mat;
+
+        // Interaction
+        box.isPickable = true;
+        box.isInteractable = true;
+        box.checkCollisions = true; // Enable collision-based pickup
+        box.itemType = itemType;
+        box.actionManager = new BABYLON.ActionManager(this.scene);
+        box.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
+            this.dotNetHelper.invokeMethodAsync('OnItemPickedUp', itemType);
+            box.dispose();
+        }));
+
+        // Also check for player intersection in update loop
+        box.onCollide = (collidedMesh) => {
+            if (collidedMesh === this.player.mesh) {
+                this.dotNetHelper.invokeMethodAsync('OnItemPickedUp', itemType);
+                box.dispose();
+            }
+        };
+
+        // Gentle bob animation
+        const bobAnim = new BABYLON.Animation("bob", "position.y", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+        bobAnim.setKeys([{ frame: 0, value: box.position.y }, { frame: 30, value: box.position.y + 0.2 }, { frame: 60, value: box.position.y }]);
+        box.animations.push(bobAnim);
+        this.scene.beginAnimation(box, 0, 60, true);
     }
 
     damageMob(mob, amount) {
@@ -84,7 +137,7 @@ class MobManager {
     }
 
     showFloatingDamage(pos, amount, color) {
-        const plane = BABYLON.MeshBuilder.CreatePlane("dmg_" + amount, { width: 4, height: 1 }, this.scene);
+        const plane = BABYLON.MeshBuilder.CreatePlane("dmg_" + amount, { width: 6, height: 1 }, this.scene);
         plane.position = pos.clone();
         plane.position.y += 1.5;
         plane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
@@ -97,7 +150,7 @@ class MobManager {
         mat.emissiveColor = BABYLON.Color3.White();
         plane.material = mat;
 
-        texture.drawText(amount.toString(), null, null, "bold 60px Arial", color, "transparent", true);
+        texture.drawText(amount.toString(), null, null, "bold 40px Arial", color, "transparent", true);
 
         const frameRate = 60;
         const riseAnim = new BABYLON.Animation("dmg_rise", "position.y", frameRate, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
@@ -196,6 +249,18 @@ class MobManager {
         // AI Loop
         this.wolves.forEach(w => this.updateAI(w, dt));
         this.rats.forEach(r => this.updateAI(r, dt));
+
+        // Loot Box Proximity Check
+        if (this.player.mesh) {
+            const lootBoxes = this.scene.meshes.filter(m => m.name.startsWith("loot_"));
+            lootBoxes.forEach(box => {
+                const dist = BABYLON.Vector3.Distance(this.player.mesh.position, box.position);
+                if (dist < 1.0 && box.itemType) {
+                    this.dotNetHelper.invokeMethodAsync('OnItemPickedUp', box.itemType);
+                    box.dispose();
+                }
+            });
+        }
     }
 
     updateAI(mob, dt) {
@@ -264,9 +329,10 @@ class MobManager {
         console.log(mob.name + " BITES!");
         mob.biteCooldown = 2.0; // 2s cooldown
 
-        // Calculate Damage
-        let dmg = 10;
-        if (mob.name.includes("Wolf")) dmg = 15;
+        // Calculate Damage using mob's ATK and player's DEF
+        const mobATK = (mob.stats && mob.stats.ATK) || 10;
+        const playerDEF = this.player.defense || 0;
+        const dmg = Math.max(1, mobATK - Math.floor(playerDEF / 2));
 
         // Visuals
         this.showFloatingDamage(this.player.mesh.position, dmg, "#ff0000");

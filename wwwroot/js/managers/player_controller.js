@@ -16,6 +16,8 @@ class PlayerController {
         this.attackCooldown = 0.0;
         this.walkSpeed = 0.10; // DOUBLED 🏃‍♀️💨
         this.runSpeed = 0.20;
+        this.attackPower = 10; // Default ATK
+        this.defense = 0; // Default DEF
 
         // Animation State
         this.initialTorsoY = 0; // Dynamic baseline
@@ -250,7 +252,13 @@ class PlayerController {
         // Trigger particles
         this.createHitSparks(point);
         // Emit event for GameEngine/Blazor logic
-        const event = new CustomEvent("playerHit", { detail: { mesh: mesh, point: point } });
+        const event = new CustomEvent("playerHit", {
+            detail: {
+                mesh: mesh,
+                point: point,
+                attackPower: this.attackPower
+            }
+        });
         window.dispatchEvent(event);
     }
 
