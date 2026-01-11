@@ -1,0 +1,328 @@
+{
+    "Name": "VintageLeatherHelmet",
+    "Parts": [
+        {
+            "Id": "helmet_dome",
+            "ParentId": null,
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.24,
+                0.24,
+                0.26
+            ],
+            "ColorHex": "#4a332a",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "helmet_liner_cutout",
+            "ParentId": "helmet_dome",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                -0.05,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.22,
+                0.22,
+                0.24
+            ],
+            "ColorHex": "#2b1d18",
+            "Material": "Leather",
+            "Operation": "Subtract"
+        },
+        {
+            "Id": "ear_flap_left",
+            "ParentId": "helmet_dome",
+            "Shape": "Sphere",
+            "Position": [
+                -0.18,
+                -0.1,
+                0.02
+            ],
+            "Rotation": [
+                0,
+                0,
+                10
+            ],
+            "Scale": [
+                0.05,
+                0.12,
+                0.1
+            ],
+            "ColorHex": "#4a332a",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "ear_flap_right",
+            "ParentId": "helmet_dome",
+            "Shape": "Sphere",
+            "Position": [
+                0.18,
+                -0.1,
+                0.02
+            ],
+            "Rotation": [
+                0,
+                0,
+                -10
+            ],
+            "Scale": [
+                0.05,
+                0.12,
+                0.1
+            ],
+            "ColorHex": "#4a332a",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "neck_guard",
+            "ParentId": "helmet_dome",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                -0.12,
+                -0.15
+            ],
+            "Rotation": [
+                -15,
+                0,
+                0
+            ],
+            "Scale": [
+                0.3,
+                0.15,
+                0.05
+            ],
+            "ColorHex": "#4a332a",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "chin_strap_left",
+            "ParentId": "ear_flap_left",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                -0.12,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                -10
+            ],
+            "Scale": [
+                0.2,
+                0.02,
+                0.04
+            ],
+            "ColorHex": "#3d2a22",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "chin_strap_right",
+            "ParentId": "ear_flap_right",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                -0.12,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                10
+            ],
+            "Scale": [
+                0.2,
+                0.02,
+                0.04
+            ],
+            "ColorHex": "#3d2a22",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "strap_buckle",
+            "ParentId": "chin_strap_left",
+            "Shape": "Torus",
+            "Position": [
+                0.0,
+                -0.1,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                90
+            ],
+            "Scale": [
+                0.03,
+                0.03,
+                0.03
+            ],
+            "ColorHex": "#a8a8a8",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "goggle_strap",
+            "ParentId": "helmet_dome",
+            "Shape": "Torus",
+            "Position": [
+                0.0,
+                0.08,
+                0.0
+            ],
+            "Rotation": [
+                -10,
+                0,
+                0
+            ],
+            "Scale": [
+                0.245,
+                0.03,
+                0.245
+            ],
+            "ColorHex": "#1f1a17",
+            "Material": "Rubber",
+            "Operation": "Union"
+        },
+        {
+            "Id": "goggle_frame_left",
+            "ParentId": "helmet_dome",
+            "Shape": "Cylinder",
+            "Position": [
+                -0.08,
+                0.1,
+                0.22
+            ],
+            "Rotation": [
+                90,
+                -15,
+                0
+            ],
+            "Scale": [
+                0.08,
+                0.02,
+                0.08
+            ],
+            "ColorHex": "#363636",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "goggle_frame_right",
+            "ParentId": "helmet_dome",
+            "Shape": "Cylinder",
+            "Position": [
+                0.08,
+                0.1,
+                0.22
+            ],
+            "Rotation": [
+                90,
+                15,
+                0
+            ],
+            "Scale": [
+                0.08,
+                0.02,
+                0.08
+            ],
+            "ColorHex": "#363636",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "lens_left",
+            "ParentId": "goggle_frame_left",
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.01,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.07,
+                0.01,
+                0.07
+            ],
+            "ColorHex": "#8caab0",
+            "Material": "Glass",
+            "Operation": "Union"
+        },
+        {
+            "Id": "lens_right",
+            "ParentId": "goggle_frame_right",
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.01,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.07,
+                0.01,
+                0.07
+            ],
+            "ColorHex": "#8caab0",
+            "Material": "Glass",
+            "Operation": "Union"
+        },
+        {
+            "Id": "bridge_nose",
+            "ParentId": "helmet_dome",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.1,
+                0.23
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.04,
+                0.01,
+                0.01
+            ],
+            "ColorHex": "#363636",
+            "Material": "Metal",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

@@ -6,9 +6,16 @@ namespace Scrapper3000.Services
 {
     public class ScrapperStateService
     {
-        public event Action OnUIChange;
+        public event Action OnStateChanged; // Triggers Save
+        public event Action OnVisualUpdate; // Triggers Re-render only
+        public event Action OnRespawnTriggered; // Triggers JS Respawn
+        public event Action OnPlayerDied; // Triggers JS Death Anim
 
         // --- Core Stats ---
+        public int Level { get; private set; } = 1;
+        public int CurrentExp { get; private set; } = 0;
+        public int NextLevelExp { get; private set; } = 100;
+
         public int Credits { get; private set; } = 0;
         public int HP { get; private set; } = 100;
         public int MaxHP { get; private set; } = 100;
@@ -34,6 +41,7 @@ namespace Scrapper3000.Services
         public bool IsLoading { get; private set; } = true;
         public bool HasExistingSave { get; private set; } = false;
         public bool IsPaused { get; private set; } = false;
+        public bool IsDead { get; private set; } = false;
 
         // --- Equipment ---
         public bool HasBackpack { get; private set; } = false;
@@ -68,38 +76,108 @@ namespace Scrapper3000.Services
             new ShopItem("ScavengerBot MK4", 2500, "bot", 1, "A high-fidelity scavenging assistant."),
             new ShopItem("Heavy Rebar", 1000, "weapon", 12, "Concrete-shattering power."),
             new ShopItem("Reinforced Overalls", 200, "armor", 8, "Stitched with scrap leather."),
-            new ShopItem("Scrap Plate Vest", 600, "armor", 20, "Literal metal plates strapped to your chest.")
+            new ShopItem("Dusty Faded Overalls", 75, "armor", 2, "Well-worn but reliable. Has knee pads."),
+            new ShopItem("Scrap Plate Vest", 600, "armor", 20, "Literal metal plates strapped to your chest."),
+            new ShopItem("Vintage Leather Helmet", 350, "armor", 10, "Classic protection. Keeps your ears warm."),
+            new ShopItem("Simple Leather Boots", 250, "armor", 5, "Good treads. Better than barefoot."),
+            new ShopItem("Simple Leather Vest", 400, "armor", 15, "Tough leather vest. Stylish too."),
+            new ShopItem("Simple Leather Gloves", 300, "armor", 5, "Better grip, fewer splinters."),
+            new ShopItem("Simple Leather Leggings", 350, "armor", 10, "Pants! Finally!"),
+            new ShopItem("Simple Leather Sleeves", 250, "armor", 8, "Coverage for your arms.")
         };
         
         public List<string> OwnedGear { get; private set; } = new() { "Rusty Stick", "Basic Overalls" };
 
+        [JSInvokable]
+        public void AddExperience(int amount)
+        {
+            CurrentExp += amount;
+            if (CurrentExp >= NextLevelExp)
+            {
+                LevelUp();
+            }
+            else
+            {
+                NotifyVisualChange(); // Just update bar
+            }
+        }
+
+        private void LevelUp()
+        {
+            // Carry over excess EXP
+            CurrentExp -= NextLevelExp;
+            Level++;
+            
+            // Geometric Curve: Level 1=100, Level 2=200, Level 3=300...
+            NextLevelExp = Level * 100;
+
+            // Stat Boosts (HP+10, ATK+2, DEF+1)
+            MaxHP += 10;
+            HP = MaxHP; // Full Heal
+            
+            CalculateStats(); // Updates ATK/DEF based on new Level
+
+            SetDialogue($"LEVEL UP! You are now Level {Level}. (HP+10, ATK+2, DEF+1)");
+            NotifyStateChange();
+        }
+
         public void AddCredits(int amount)
         {
             Credits += amount;
-            NotifyUIChange();
+            NotifyStateChange();
         }
 
         [JSInvokable]
         public void TakeDamage(int rawDamage)
         {
-            if (HP <= 0) return;
+            if (HP <= 0 || IsDead) return;
 
-            // Simple defense: Every 10 points of DEF reduces damage by 1
-            int netDamage = Math.Max(1, rawDamage - (Defense / 10));
+            // Defense: Every 2 points of DEF reduces damage by 1 (Min 1)
+            int netDamage = Math.Max(1, rawDamage - (Defense / 2));
             HP = Math.Max(0, HP - netDamage);
-            
-            NotifyUIChange();
-            SaveState();
             
             if (HP <= 0)
             {
-                SetDialogue("Critical failure! You've been neutralized by the local fauna.");
-                // We'll handle a proper 'Game Over' or 'Respawn' later, but for now we notify.
+                HP = 0;
+                IsDead = true;
+                SetDialogue("CRITICAL FAILURE. Systems offline.");
+                NotifyStateChange();
+                OnPlayerDied?.Invoke(); // Trigger death animation
             }
             else
             {
-                SetDialogue($"Ouch! Took {netDamage} damage.");
+                NotifyStateChange();
             }
+        }
+
+        public void Respawn()
+        {
+            if (!IsDead) return;
+
+            int revivalCost = 50;
+            int costPaid = 0;
+
+            if (Credits >= revivalCost)
+            {
+                Credits -= revivalCost;
+                costPaid = revivalCost;
+                SetDialogue($"Revival complete. Service fee: {revivalCost} Credits.");
+            }
+            else if (Credits > 0)
+            {
+                costPaid = Credits;
+                Credits = 0;
+                SetDialogue($"Revival complete. You were drained of your last {costPaid} Credits.");
+            }
+            else
+            {
+                SetDialogue("Revival complete. Pro bono service provided for destitute scrapper.");
+            }
+
+            HP = MaxHP;
+            IsDead = false;
+            NotifyStateChange();
+            OnRespawnTriggered?.Invoke();
         }
 
         [JSInvokable]
@@ -107,7 +185,7 @@ namespace Scrapper3000.Services
         {
             if (DialogueText == text) return;
             DialogueText = text;
-            NotifyUIChange();
+            NotifyVisualChange();
         }
 
         public void EquipItem(string item)
@@ -131,8 +209,7 @@ namespace Scrapper3000.Services
                 SetDialogue("So, let's have a look at you! Use that mirror and fix yourself up.");
             }
             
-            NotifyUIChange();
-            SaveState();
+            NotifyStateChange();
         }
 
         public void UpdateCustomization(string gender, float hairLength, string hairColor)
@@ -140,7 +217,7 @@ namespace Scrapper3000.Services
             Gender = gender;
             HairLength = hairLength;
             HairColor = hairColor;
-            NotifyUIChange();
+            NotifyVisualChange(); // Visual only until confirmed
         }
 
         public void CompleteCustomization()
@@ -149,8 +226,7 @@ namespace Scrapper3000.Services
             IntroComplete = true;
             IsFirstPerson = false;
             IsNaming = true; // Trigger name prompt after exiting shed
-            NotifyUIChange();
-            SaveState();
+            NotifyStateChange();
         }
 
         [JSInvokable]
@@ -170,8 +246,7 @@ namespace Scrapper3000.Services
                 Credits -= totalCost;
                 HP = MaxHP;
                 SetDialogue($"The medic patches you up. You feel revitalized! (-{totalCost} Credits)");
-                NotifyUIChange();
-                SaveState();
+                NotifyStateChange();
             }
             else
             {
@@ -182,8 +257,7 @@ namespace Scrapper3000.Services
                     Credits = 0;
                     HP += healAmount;
                     SetDialogue($"The medic does what they can with your meager stash. (+{healAmount} HP)");
-                    NotifyUIChange();
-                    SaveState();
+                    NotifyStateChange();
                 }
                 else
                 {
@@ -196,6 +270,11 @@ namespace Scrapper3000.Services
         {
             // Reset gameplay state but keep customization if desired (or reset all)
             Credits = 0;
+            Level = 1;
+            CurrentExp = 0;
+            NextLevelExp = 100;
+            MaxHP = 100;
+            HP = 100;
             Inventory = new Dictionary<string, int> { { "Rubber", 0 }, { "Plastic", 0 }, { "Wood", 0 }, { "Cloth", 0 }, { "Metal", 0 } };
             HasBackpack = false;
             HasOveralls = false;
@@ -204,28 +283,28 @@ namespace Scrapper3000.Services
             IsFirstPerson = true;
             IsLandingPage = false;
             PlayerName = "Scrapper";
-            NotifyUIChange();
+            NotifyStateChange();
         }
 
         public void ContinueGame()
         {
             IsLandingPage = false;
             IsPaused = false;
-            NotifyUIChange();
+            NotifyVisualChange();
         }
 
         public void TogglePause()
         {
             if (IsLoading || IsLandingPage || IsCustomizing || IsNaming) return;
             IsPaused = !IsPaused;
-            NotifyUIChange();
+            NotifyVisualChange();
         }
 
         public void ExitGame()
         {
             IsPaused = false;
             IsLandingPage = true;
-            NotifyUIChange();
+            NotifyVisualChange();
         }
 
         public void SetPlayerName(string name)
@@ -234,8 +313,7 @@ namespace Scrapper3000.Services
             {
                 PlayerName = name;
                 IsNaming = false;
-                NotifyUIChange();
-                SaveState();
+                NotifyStateChange();
             }
         }
 
@@ -244,8 +322,7 @@ namespace Scrapper3000.Services
             if (Inventory.ContainsKey(material))
             {
                 Inventory[material] += amount;
-                NotifyUIChange();
-                SaveState();
+                NotifyStateChange();
             }
         }
 
@@ -255,8 +332,7 @@ namespace Scrapper3000.Services
             {
                 Inventory[itemName]--;
                 Credits += MaterialPrices[itemName];
-                NotifyUIChange();
-                SaveState();
+                NotifyStateChange();
                 SetDialogue($"Sold 1 {itemName}. Quick credits!");
             }
         }
@@ -269,8 +345,7 @@ namespace Scrapper3000.Services
                 int totalValue = count * MaterialPrices[itemName];
                 Credits += totalValue;
                 Inventory[itemName] = 0;
-                NotifyUIChange();
-                SaveState();
+                NotifyStateChange();
                 SetDialogue($"Sold {count} {itemName} for {totalValue} credits!");
             }
         }
@@ -279,14 +354,14 @@ namespace Scrapper3000.Services
         {
             if (IsShopOpen) return;
             IsShopOpen = true;
-            NotifyUIChange();
+            NotifyVisualChange();
         }
 
         public void CloseShop()
         {
             if (!IsShopOpen) return;
             IsShopOpen = false;
-            NotifyUIChange();
+            NotifyVisualChange();
         }
 
         public void BuyItem(string itemName)
@@ -301,17 +376,18 @@ namespace Scrapper3000.Services
                 else if (item.Type == "armor") EquippedArmor = item.Name;
 
                 CalculateStats();
-                NotifyUIChange();
-                SaveState();
+                NotifyStateChange();
                 SetDialogue($"Bought {item.Name}! Stay safe out there.");
             }
         }
 
         private void CalculateStats()
         {
-            // Base stats (Scrapper defaults)
-            int atk = 10;
-            int def = 5;
+            // Base stats (Scrapper defaults) + Level Scaling
+            // Level 1: 10 ATK, 5 DEF
+            // Level 2: 12 ATK, 6 DEF
+            int atk = 10 + ((Level - 1) * 2);
+            int def = 5 + ((Level - 1) * 1);
 
             // Add bonuses from equipped gear
             var weapon = AvailableGear.Find(i => i.Name == EquippedWeapon);
@@ -328,6 +404,9 @@ namespace Scrapper3000.Services
         {
             return System.Text.Json.JsonSerializer.Serialize(new
             {
+                level = Level,
+                currentExp = CurrentExp,
+                nextLevelExp = NextLevelExp,
                 credits = Credits,
                 hp = HP,
                 maxHp = MaxHP,
@@ -353,7 +432,7 @@ namespace Scrapper3000.Services
                 if (string.IsNullOrEmpty(stateJson))
                 {
                     IsLoading = false;
-                    NotifyUIChange();
+                    NotifyVisualChange();
                     return;
                 }
 
@@ -362,20 +441,23 @@ namespace Scrapper3000.Services
                 if (state != null)
                 {
                     Credits = state.Credits;
-                    HP = state.Hp;
-                    MaxHP = state.MaxHp;
+                    Level = state.Level > 0 ? state.Level : 1;
+                    CurrentExp = state.CurrentExp;
+                    NextLevelExp = state.NextLevelExp > 0 ? state.NextLevelExp : (Level * 100);
+                    HP = state.Hp <= 0 ? 10 : state.Hp; // Prevent death loop on load
+                    MaxHP = state.MaxHp > 0 ? state.MaxHp : (100 + ((Level - 1) * 10)); // Recalculate if missing
                     HasBackpack = state.HasBackpack;
                     HasOveralls = state.HasOveralls;
                     HasStick = state.HasStick;
                     IntroComplete = state.IntroComplete;
-                    Inventory = state.Inventory ?? Inventory;
+                    Inventory = state.Inventory ?? new Dictionary<string, int> { { "Rubber", 0 }, { "Plastic", 0 }, { "Wood", 0 }, { "Cloth", 0 }, { "Metal", 0 } };
                     Gender = state.Gender ?? Gender;
                     HairLength = state.HairLength;
                     HairColor = state.HairColor ?? HairColor;
-                    PlayerName = state.PlayerName ?? PlayerName;
+                    PlayerName = !string.IsNullOrEmpty(state.PlayerName) ? state.PlayerName : PlayerName;
                     EquippedWeapon = state.EquippedWeapon ?? EquippedWeapon;
                     EquippedArmor = state.EquippedArmor ?? EquippedArmor;
-                    OwnedGear = state.OwnedGear ?? OwnedGear;
+                    OwnedGear = state.OwnedGear ?? new List<string> { "Rusty Stick", "Basic Overalls" };
 
                     CalculateStats();
                     IsLoading = false;
@@ -389,31 +471,39 @@ namespace Scrapper3000.Services
                         IsNaming = true;
                     }
 
-                    NotifyUIChange();
+                    NotifyVisualChange();
                 }
                 else
                 {
                     IsLoading = false;
-                    NotifyUIChange();
+                    NotifyVisualChange();
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error parsing state: " + ex.Message);
                 IsLoading = false;
-                NotifyUIChange();
+                NotifyVisualChange();
             }
         }
 
-        private void SaveState()
+        private void NotifyStateChange() 
         {
-            // This will be called by UI components to trigger JS bridge
+            if (IsLoading) return;
+            OnStateChanged?.Invoke();
+            OnVisualUpdate?.Invoke();
         }
 
-        private void NotifyUIChange() => OnUIChange?.Invoke();
+        private void NotifyVisualChange()
+        {
+            OnVisualUpdate?.Invoke();
+        }
 
         private class ScrapperData
         {
+            public int Level { get; set; }
+            public int CurrentExp { get; set; }
+            public int NextLevelExp { get; set; }
             public int Credits { get; set; }
             public int Hp { get; set; }
             public int MaxHp { get; set; }

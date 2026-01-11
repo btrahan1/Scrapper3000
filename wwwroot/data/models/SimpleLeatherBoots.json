@@ -1,0 +1,282 @@
+{
+    "Name": "SimpleLeatherBoots",
+    "Parts": [
+        {
+            "Id": "L_Sole",
+            "ParentId": null,
+            "Shape": "Box",
+            "Position": [
+                -0.2,
+                0.02,
+                0.05
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.14,
+                0.04,
+                0.32
+            ],
+            "ColorHex": "#1a1a1a",
+            "Material": "Rubber",
+            "Operation": "Union"
+        },
+        {
+            "Id": "L_Heel",
+            "ParentId": "L_Sole",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                -0.02,
+                -0.1
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.14,
+                0.04,
+                0.1
+            ],
+            "ColorHex": "#1a1a1a",
+            "Material": "Rubber",
+            "Operation": "Union"
+        },
+        {
+            "Id": "L_ToeBox",
+            "ParentId": "L_Sole",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                0.05,
+                0.1
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.13,
+                0.09,
+                0.14
+            ],
+            "ColorHex": "#5c4033",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "L_Bridge",
+            "ParentId": "L_Sole",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.08,
+                0.0
+            ],
+            "Rotation": [
+                15,
+                0,
+                0
+            ],
+            "Scale": [
+                0.135,
+                0.1,
+                0.18
+            ],
+            "ColorHex": "#5c4033",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "L_Shaft",
+            "ParentId": "L_Sole",
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.2,
+                -0.08
+            ],
+            "Rotation": [
+                -5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.14,
+                0.25,
+                0.14
+            ],
+            "ColorHex": "#5c4033",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "L_Cuff",
+            "ParentId": "L_Shaft",
+            "Shape": "Torus",
+            "Position": [
+                0.0,
+                0.12,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.145,
+                0.04,
+                0.145
+            ],
+            "ColorHex": "#3e2b22",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Sole",
+            "ParentId": null,
+            "Shape": "Box",
+            "Position": [
+                0.2,
+                0.02,
+                0.05
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.14,
+                0.04,
+                0.32
+            ],
+            "ColorHex": "#1a1a1a",
+            "Material": "Rubber",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Heel",
+            "ParentId": "R_Sole",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                -0.02,
+                -0.1
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.14,
+                0.04,
+                0.1
+            ],
+            "ColorHex": "#1a1a1a",
+            "Material": "Rubber",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_ToeBox",
+            "ParentId": "R_Sole",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                0.05,
+                0.1
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.13,
+                0.09,
+                0.14
+            ],
+            "ColorHex": "#5c4033",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Bridge",
+            "ParentId": "R_Sole",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.08,
+                0.0
+            ],
+            "Rotation": [
+                15,
+                0,
+                0
+            ],
+            "Scale": [
+                0.135,
+                0.1,
+                0.18
+            ],
+            "ColorHex": "#5c4033",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Shaft",
+            "ParentId": "R_Sole",
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.2,
+                -0.08
+            ],
+            "Rotation": [
+                -5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.14,
+                0.25,
+                0.14
+            ],
+            "ColorHex": "#5c4033",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Cuff",
+            "ParentId": "R_Shaft",
+            "Shape": "Torus",
+            "Position": [
+                0.0,
+                0.12,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.145,
+                0.04,
+                0.145
+            ],
+            "ColorHex": "#3e2b22",
+            "Material": "Leather",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

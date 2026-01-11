@@ -1,0 +1,374 @@
+{
+    "Name": "SimpleLeatherGloves",
+    "Parts": [
+        {
+            "Id": "L_Wrist_Cuff",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                -0.15,
+                1.0,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                15
+            ],
+            "Scale": [
+                0.09,
+                0.08,
+                0.09
+            ],
+            "ColorHex": "#4a3b2a",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "L_Palm",
+            "ParentId": "L_Wrist_Cuff",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.1,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.09,
+                0.11,
+                0.04
+            ],
+            "ColorHex": "#5c4935",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "L_Thumb",
+            "ParentId": "L_Palm",
+            "Shape": "Capsule",
+            "Position": [
+                0.05,
+                0.02,
+                0.02
+            ],
+            "Rotation": [
+                0,
+                30,
+                -45
+            ],
+            "Scale": [
+                0.025,
+                0.07,
+                0.025
+            ],
+            "ColorHex": "#5c4935",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "L_Index",
+            "ParentId": "L_Palm",
+            "Shape": "Capsule",
+            "Position": [
+                0.035,
+                0.11,
+                0.0
+            ],
+            "Rotation": [
+                5,
+                0,
+                -5
+            ],
+            "Scale": [
+                0.022,
+                0.08,
+                0.022
+            ],
+            "ColorHex": "#5c4935",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "L_Middle",
+            "ParentId": "L_Palm",
+            "Shape": "Capsule",
+            "Position": [
+                0.012,
+                0.115,
+                0.0
+            ],
+            "Rotation": [
+                5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.022,
+                0.085,
+                0.022
+            ],
+            "ColorHex": "#5c4935",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "L_Ring",
+            "ParentId": "L_Palm",
+            "Shape": "Capsule",
+            "Position": [
+                -0.012,
+                0.11,
+                0.0
+            ],
+            "Rotation": [
+                5,
+                0,
+                2
+            ],
+            "Scale": [
+                0.022,
+                0.08,
+                0.022
+            ],
+            "ColorHex": "#5c4935",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "L_Pinky",
+            "ParentId": "L_Palm",
+            "Shape": "Capsule",
+            "Position": [
+                -0.035,
+                0.1,
+                0.0
+            ],
+            "Rotation": [
+                5,
+                0,
+                5
+            ],
+            "Scale": [
+                0.02,
+                0.065,
+                0.02
+            ],
+            "ColorHex": "#5c4935",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Wrist_Cuff",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                0.15,
+                1.0,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                -15
+            ],
+            "Scale": [
+                0.09,
+                0.08,
+                0.09
+            ],
+            "ColorHex": "#4a3b2a",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Palm",
+            "ParentId": "R_Wrist_Cuff",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.1,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.09,
+                0.11,
+                0.04
+            ],
+            "ColorHex": "#5c4935",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Thumb",
+            "ParentId": "R_Palm",
+            "Shape": "Capsule",
+            "Position": [
+                -0.05,
+                0.02,
+                0.02
+            ],
+            "Rotation": [
+                0,
+                -30,
+                45
+            ],
+            "Scale": [
+                0.025,
+                0.07,
+                0.025
+            ],
+            "ColorHex": "#5c4935",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Index",
+            "ParentId": "R_Palm",
+            "Shape": "Capsule",
+            "Position": [
+                -0.035,
+                0.11,
+                0.0
+            ],
+            "Rotation": [
+                5,
+                0,
+                5
+            ],
+            "Scale": [
+                0.022,
+                0.08,
+                0.022
+            ],
+            "ColorHex": "#5c4935",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Middle",
+            "ParentId": "R_Palm",
+            "Shape": "Capsule",
+            "Position": [
+                -0.012,
+                0.115,
+                0.0
+            ],
+            "Rotation": [
+                5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.022,
+                0.085,
+                0.022
+            ],
+            "ColorHex": "#5c4935",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Ring",
+            "ParentId": "R_Palm",
+            "Shape": "Capsule",
+            "Position": [
+                0.012,
+                0.11,
+                0.0
+            ],
+            "Rotation": [
+                5,
+                0,
+                -2
+            ],
+            "Scale": [
+                0.022,
+                0.08,
+                0.022
+            ],
+            "ColorHex": "#5c4935",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Pinky",
+            "ParentId": "R_Palm",
+            "Shape": "Capsule",
+            "Position": [
+                0.035,
+                0.1,
+                0.0
+            ],
+            "Rotation": [
+                5,
+                0,
+                -5
+            ],
+            "Scale": [
+                0.02,
+                0.065,
+                0.02
+            ],
+            "ColorHex": "#5c4935",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "L_Stitching",
+            "ParentId": "L_Palm",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.0,
+                0.02
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.08,
+                0.005,
+                0.01
+            ],
+            "ColorHex": "#3d3023",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "R_Stitching",
+            "ParentId": "R_Palm",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.0,
+                0.02
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.08,
+                0.005,
+                0.01
+            ],
+            "ColorHex": "#3d3023",
+            "Material": "Leather",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

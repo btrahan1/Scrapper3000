@@ -4,7 +4,8 @@
         "HP": 30,
         "ATK": 16,
         "DEF": 5,
-        "AtkSpeed": 1.5
+        "AtkSpeed": 1.5,
+        "ExpReward": 50
     },
     "Parts": [
         {

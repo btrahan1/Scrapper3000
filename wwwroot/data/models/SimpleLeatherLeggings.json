@@ -1,0 +1,305 @@
+{
+    "Name": "SimpleLeatherLeggings",
+    "Parts": [
+        {
+            "Id": "waist_band",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                1.05,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.36,
+                0.15,
+                0.28
+            ],
+            "ColorHex": "#262626",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "pelvis_core",
+            "ParentId": "waist_band",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                -0.1,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.36,
+                0.25,
+                0.28
+            ],
+            "ColorHex": "#262626",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_upper_left",
+            "ParentId": "pelvis_core",
+            "Shape": "Capsule",
+            "Position": [
+                -0.16,
+                -0.25,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                2
+            ],
+            "Scale": [
+                0.15,
+                0.55,
+                0.15
+            ],
+            "ColorHex": "#262626",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_upper_right",
+            "ParentId": "pelvis_core",
+            "Shape": "Capsule",
+            "Position": [
+                0.16,
+                -0.25,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                -2
+            ],
+            "Scale": [
+                0.15,
+                0.55,
+                0.15
+            ],
+            "ColorHex": "#262626",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "knee_left",
+            "ParentId": "leg_upper_left",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                -0.28,
+                0.02
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.13,
+                0.13,
+                0.13
+            ],
+            "ColorHex": "#212121",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "knee_right",
+            "ParentId": "leg_upper_right",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                -0.28,
+                0.02
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.13,
+                0.13,
+                0.13
+            ],
+            "ColorHex": "#212121",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_lower_left",
+            "ParentId": "knee_left",
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                -0.25,
+                -0.02
+            ],
+            "Rotation": [
+                3,
+                0,
+                0
+            ],
+            "Scale": [
+                0.11,
+                0.45,
+                0.11
+            ],
+            "ColorHex": "#262626",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_lower_right",
+            "ParentId": "knee_right",
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                -0.25,
+                -0.02
+            ],
+            "Rotation": [
+                3,
+                0,
+                0
+            ],
+            "Scale": [
+                0.11,
+                0.45,
+                0.11
+            ],
+            "ColorHex": "#262626",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "ankle_cuff_left",
+            "ParentId": "leg_lower_left",
+            "Shape": "Torus",
+            "Position": [
+                0.0,
+                -0.22,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.115,
+                0.02,
+                0.115
+            ],
+            "ColorHex": "#1a1a1a",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "ankle_cuff_right",
+            "ParentId": "leg_lower_right",
+            "Shape": "Torus",
+            "Position": [
+                0.0,
+                -0.22,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.115,
+                0.02,
+                0.115
+            ],
+            "ColorHex": "#1a1a1a",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "seam_side_left",
+            "ParentId": "leg_upper_left",
+            "Shape": "Box",
+            "Position": [
+                -0.07,
+                0.0,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.02,
+                0.54,
+                0.02
+            ],
+            "ColorHex": "#141414",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "seam_side_right",
+            "ParentId": "leg_upper_right",
+            "Shape": "Box",
+            "Position": [
+                0.07,
+                0.0,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.02,
+                0.54,
+                0.02
+            ],
+            "ColorHex": "#141414",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "waist_button",
+            "ParentId": "waist_band",
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.0,
+                0.14
+            ],
+            "Rotation": [
+                90,
+                0,
+                0
+            ],
+            "Scale": [
+                0.02,
+                0.01,
+                0.02
+            ],
+            "ColorHex": "#595959",
+            "Material": "Metal",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

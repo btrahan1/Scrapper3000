@@ -1,0 +1,328 @@
+{
+    "Name": "DustyFadedOveralls",
+    "Parts": [
+        {
+            "Id": "waist_band",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                1.0,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.45,
+                0.25,
+                0.35
+            ],
+            "ColorHex": "#5d7687",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_left",
+            "ParentId": "waist_band",
+            "Shape": "Cylinder",
+            "Position": [
+                -0.22,
+                -0.5,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                2
+            ],
+            "Scale": [
+                0.2,
+                0.9,
+                0.22
+            ],
+            "ColorHex": "#6b8799",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "leg_right",
+            "ParentId": "waist_band",
+            "Shape": "Cylinder",
+            "Position": [
+                0.22,
+                -0.5,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                -2
+            ],
+            "Scale": [
+                0.2,
+                0.9,
+                0.22
+            ],
+            "ColorHex": "#6b8799",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "bib_panel",
+            "ParentId": "waist_band",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.35,
+                0.16
+            ],
+            "Rotation": [
+                5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.3,
+                0.45,
+                0.05
+            ],
+            "ColorHex": "#5d7687",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "bib_pocket",
+            "ParentId": "bib_panel",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.0,
+                0.04
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.2,
+                0.15,
+                0.02
+            ],
+            "ColorHex": "#4f6575",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "strap_left",
+            "ParentId": "bib_panel",
+            "Shape": "Box",
+            "Position": [
+                -0.12,
+                0.35,
+                -0.2
+            ],
+            "Rotation": [
+                -15,
+                0,
+                0
+            ],
+            "Scale": [
+                0.06,
+                0.4,
+                0.02
+            ],
+            "ColorHex": "#546b7a",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "strap_right",
+            "ParentId": "bib_panel",
+            "Shape": "Box",
+            "Position": [
+                0.12,
+                0.35,
+                -0.2
+            ],
+            "Rotation": [
+                -15,
+                0,
+                0
+            ],
+            "Scale": [
+                0.06,
+                0.4,
+                0.02
+            ],
+            "ColorHex": "#546b7a",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "buckle_left",
+            "ParentId": "bib_panel",
+            "Shape": "Cylinder",
+            "Position": [
+                -0.12,
+                0.2,
+                0.03
+            ],
+            "Rotation": [
+                90,
+                0,
+                0
+            ],
+            "Scale": [
+                0.04,
+                0.02,
+                0.04
+            ],
+            "ColorHex": "#b5a642",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "buckle_right",
+            "ParentId": "bib_panel",
+            "Shape": "Cylinder",
+            "Position": [
+                0.12,
+                0.2,
+                0.03
+            ],
+            "Rotation": [
+                90,
+                0,
+                0
+            ],
+            "Scale": [
+                0.04,
+                0.02,
+                0.04
+            ],
+            "ColorHex": "#b5a642",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "back_panel",
+            "ParentId": "waist_band",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.25,
+                -0.16
+            ],
+            "Rotation": [
+                -5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.25,
+                0.3,
+                0.05
+            ],
+            "ColorHex": "#5d7687",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "dust_patch_left_knee",
+            "ParentId": "leg_left",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                -0.1,
+                0.1
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.15,
+                0.2,
+                0.05
+            ],
+            "ColorHex": "#8f8b82",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "dust_patch_right_knee",
+            "ParentId": "leg_right",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                -0.1,
+                0.1
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.15,
+                0.2,
+                0.05
+            ],
+            "ColorHex": "#8f8b82",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "dust_hem_left",
+            "ParentId": "leg_left",
+            "Shape": "Torus",
+            "Position": [
+                0.0,
+                -0.42,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.21,
+                0.05,
+                0.21
+            ],
+            "ColorHex": "#7a756d",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "dust_hem_right",
+            "ParentId": "leg_right",
+            "Shape": "Torus",
+            "Position": [
+                0.0,
+                -0.42,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.21,
+                0.05,
+                0.21
+            ],
+            "ColorHex": "#7a756d",
+            "Material": "Leather",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

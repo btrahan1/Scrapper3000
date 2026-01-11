@@ -1,0 +1,259 @@
+{
+    "Name": "SimpleLeatherVest",
+    "Parts": [
+        {
+            "Id": "back_panel",
+            "ParentId": null,
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                1.35,
+                -0.12
+            ],
+            "Rotation": [
+                5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.44,
+                0.55,
+                0.04
+            ],
+            "ColorHex": "#594132",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "shoulder_bridge_left",
+            "ParentId": "back_panel",
+            "Shape": "Box",
+            "Position": [
+                -0.14,
+                0.25,
+                0.12
+            ],
+            "Rotation": [
+                85,
+                0,
+                0
+            ],
+            "Scale": [
+                0.12,
+                0.28,
+                0.04
+            ],
+            "ColorHex": "#594132",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "shoulder_bridge_right",
+            "ParentId": "back_panel",
+            "Shape": "Box",
+            "Position": [
+                0.14,
+                0.25,
+                0.12
+            ],
+            "Rotation": [
+                85,
+                0,
+                0
+            ],
+            "Scale": [
+                0.12,
+                0.28,
+                0.04
+            ],
+            "ColorHex": "#594132",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "front_panel_left",
+            "ParentId": "shoulder_bridge_left",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.28,
+                0.05
+            ],
+            "Rotation": [
+                -90,
+                0,
+                0
+            ],
+            "Scale": [
+                0.16,
+                0.55,
+                0.04
+            ],
+            "ColorHex": "#594132",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "front_panel_right",
+            "ParentId": "shoulder_bridge_right",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.28,
+                0.05
+            ],
+            "Rotation": [
+                -90,
+                0,
+                0
+            ],
+            "Scale": [
+                0.16,
+                0.55,
+                0.04
+            ],
+            "ColorHex": "#594132",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "side_connector_left",
+            "ParentId": "back_panel",
+            "Shape": "Box",
+            "Position": [
+                -0.22,
+                -0.1,
+                0.12
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.04,
+                0.3,
+                0.2
+            ],
+            "ColorHex": "#4d382b",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "side_connector_right",
+            "ParentId": "back_panel",
+            "Shape": "Box",
+            "Position": [
+                0.22,
+                -0.1,
+                0.12
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.04,
+                0.3,
+                0.2
+            ],
+            "ColorHex": "#4d382b",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "collar_back",
+            "ParentId": "back_panel",
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.28,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                90
+            ],
+            "Scale": [
+                0.04,
+                0.44,
+                0.04
+            ],
+            "ColorHex": "#3d2b22",
+            "Material": "Leather",
+            "Operation": "Union"
+        },
+        {
+            "Id": "button_top",
+            "ParentId": "front_panel_right",
+            "Shape": "Cylinder",
+            "Position": [
+                -0.05,
+                0.15,
+                0.03
+            ],
+            "Rotation": [
+                90,
+                0,
+                0
+            ],
+            "Scale": [
+                0.02,
+                0.01,
+                0.02
+            ],
+            "ColorHex": "#b8a15c",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "button_mid",
+            "ParentId": "front_panel_right",
+            "Shape": "Cylinder",
+            "Position": [
+                -0.05,
+                0.0,
+                0.03
+            ],
+            "Rotation": [
+                90,
+                0,
+                0
+            ],
+            "Scale": [
+                0.02,
+                0.01,
+                0.02
+            ],
+            "ColorHex": "#b8a15c",
+            "Material": "Metal",
+            "Operation": "Union"
+        },
+        {
+            "Id": "button_low",
+            "ParentId": "front_panel_right",
+            "Shape": "Cylinder",
+            "Position": [
+                -0.05,
+                -0.15,
+                0.03
+            ],
+            "Rotation": [
+                90,
+                0,
+                0
+            ],
+            "Scale": [
+                0.02,
+                0.01,
+                0.02
+            ],
+            "ColorHex": "#b8a15c",
+            "Material": "Metal",
+            "Operation": "Union"
+        }
+    ],
+    "Timeline": []
+}

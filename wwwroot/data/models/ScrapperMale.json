@@ -1,121 +1,673 @@
 {
-    "name": "ScrapperMale",
-    "parts": [
+    "Name": "WastelandWarriorBase",
+    "Parts": [
         {
-            "name": "torso",
-            "type": "box",
-            "width": 0.5,
-            "height": 0.8,
-            "depth": 0.3,
-            "position": {
-                "x": 0,
-                "y": 0.9,
-                "z": 0
-            },
-            "color": {
-                "r": 0.1,
-                "g": 0.2,
-                "b": 0.4
-            }
+            "Id": "pelvis",
+            "ParentId": null,
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                1.0,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.28,
+                0.22,
+                0.24
+            ],
+            "ColorHex": "#4a453b",
+            "Material": "Leather",
+            "Operation": "Union"
         },
         {
-            "name": "head",
-            "type": "sphere",
-            "diameter": 0.45,
-            "position": {
-                "x": 0,
-                "y": 1.5,
-                "z": 0
-            },
-            "color": {
-                "r": 0.8,
-                "g": 0.6,
-                "b": 0.5
-            }
+            "Id": "ragged_shorts",
+            "ParentId": "pelvis",
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                -0.15,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.29,
+                0.35,
+                0.25
+            ],
+            "ColorHex": "#4a453b",
+            "Material": "Leather",
+            "Operation": "Union"
         },
         {
-            "name": "leg_l",
-            "type": "box",
-            "width": 0.2,
-            "height": 0.9,
-            "depth": 0.2,
-            "position": {
-                "x": -0.15,
-                "y": 0.45,
-                "z": 0
-            },
-            "color": {
-                "r": 0.1,
-                "g": 0.1,
-                "b": 0.1
-            }
+            "Id": "spine_waist",
+            "ParentId": "pelvis",
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.2,
+                0.0
+            ],
+            "Rotation": [
+                5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.24,
+                0.3,
+                0.2
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
         },
         {
-            "name": "leg_r",
-            "type": "box",
-            "width": 0.2,
-            "height": 0.9,
-            "depth": 0.2,
-            "position": {
-                "x": 0.15,
-                "y": 0.45,
-                "z": 0
-            },
-            "color": {
-                "r": 0.1,
-                "g": 0.1,
-                "b": 0.1
-            }
+            "Id": "chest",
+            "ParentId": "spine_waist",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                0.35,
+                0.02
+            ],
+            "Rotation": [
+                -5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.32,
+                0.4,
+                0.22
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
         },
         {
-            "name": "arm_l",
-            "type": "box",
-            "width": 0.18,
-            "height": 0.7,
-            "depth": 0.18,
-            "position": {
-                "x": -0.35,
-                "y": 1.0,
-                "z": 0
-            },
-            "color": {
-                "r": 0.8,
-                "g": 0.6,
-                "b": 0.5
-            }
+            "Id": "neck",
+            "ParentId": "chest",
+            "Shape": "Cylinder",
+            "Position": [
+                0.0,
+                0.25,
+                -0.02
+            ],
+            "Rotation": [
+                5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.1,
+                0.15,
+                0.1
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
         },
         {
-            "name": "arm_r",
-            "type": "box",
-            "width": 0.18,
-            "height": 0.7,
-            "depth": 0.18,
-            "position": {
-                "x": 0.35,
-                "y": 1.0,
-                "z": 0
-            },
-            "color": {
-                "r": 0.8,
-                "g": 0.6,
-                "b": 0.5
-            }
+            "Id": "head_core",
+            "ParentId": "neck",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                0.18,
+                0.02
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.18,
+                0.22,
+                0.2
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
         },
         {
-            "name": "hair_anchor",
-            "type": "sphere",
-            "diameter": 0.46,
-            "position": {
-                "x": 0,
-                "y": 1.52,
-                "z": 0
-            },
-            "color": {
-                "r": 0.3,
-                "g": 0.2,
-                "b": 0.1
-            },
-            "isHair": true
+            "Id": "jaw",
+            "ParentId": "head_core",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                -0.08,
+                0.04
+            ],
+            "Rotation": [
+                10,
+                0,
+                0
+            ],
+            "Scale": [
+                0.14,
+                0.1,
+                0.12
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "nose",
+            "ParentId": "head_core",
+            "Shape": "Cone",
+            "Position": [
+                0.0,
+                0.0,
+                0.1
+            ],
+            "Rotation": [
+                -5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.03,
+                0.08,
+                0.03
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "hair_stubble",
+            "ParentId": "head_core",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                0.02,
+                -0.02
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.185,
+                0.225,
+                0.205
+            ],
+            "ColorHex": "#2e2b26",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "eye_L",
+            "ParentId": "head_core",
+            "Shape": "Sphere",
+            "Position": [
+                -0.06,
+                0.04,
+                0.08
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.025,
+                0.025,
+                0.02
+            ],
+            "ColorHex": "#2e2e2e",
+            "Material": "Glass",
+            "Operation": "Union"
+        },
+        {
+            "Id": "eye_R",
+            "ParentId": "head_core",
+            "Shape": "Sphere",
+            "Position": [
+                0.06,
+                0.04,
+                0.08
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.025,
+                0.025,
+                0.02
+            ],
+            "ColorHex": "#2e2e2e",
+            "Material": "Glass",
+            "Operation": "Union"
+        },
+        {
+            "Id": "shoulder_L",
+            "ParentId": "chest",
+            "Shape": "Sphere",
+            "Position": [
+                -0.2,
+                0.15,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.13,
+                0.13,
+                0.13
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "arm_upper_L",
+            "ParentId": "shoulder_L",
+            "Shape": "Capsule",
+            "Position": [
+                -0.05,
+                -0.25,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                5
+            ],
+            "Scale": [
+                0.09,
+                0.45,
+                0.09
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "elbow_L",
+            "ParentId": "arm_upper_L",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                -0.25,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.085,
+                0.085,
+                0.085
+            ],
+            "ColorHex": "#b08d6f",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "arm_lower_L",
+            "ParentId": "elbow_L",
+            "Shape": "Capsule",
+            "Position": [
+                0.0,
+                -0.22,
+                0.02
+            ],
+            "Rotation": [
+                5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.08,
+                0.4,
+                0.08
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "hand_L",
+            "ParentId": "arm_lower_L",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                -0.25,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.08,
+                0.1,
+                0.03
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "shoulder_R",
+            "ParentId": "chest",
+            "Shape": "Sphere",
+            "Position": [
+                0.2,
+                0.15,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.13,
+                0.13,
+                0.13
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "arm_upper_R",
+            "ParentId": "shoulder_R",
+            "Shape": "Capsule",
+            "Position": [
+                0.05,
+                -0.25,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                -5
+            ],
+            "Scale": [
+                0.09,
+                0.45,
+                0.09
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "elbow_R",
+            "ParentId": "arm_upper_R",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                -0.25,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.085,
+                0.085,
+                0.085
+            ],
+            "ColorHex": "#b08d6f",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "arm_lower_R",
+            "ParentId": "elbow_R",
+            "Shape": "Capsule",
+            "Position": [
+                0.0,
+                -0.22,
+                0.02
+            ],
+            "Rotation": [
+                5,
+                0,
+                0
+            ],
+            "Scale": [
+                0.08,
+                0.4,
+                0.08
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "hand_R",
+            "ParentId": "arm_lower_R",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                -0.25,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.08,
+                0.1,
+                0.03
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "thigh_L",
+            "ParentId": "pelvis",
+            "Shape": "Capsule",
+            "Position": [
+                -0.14,
+                -0.3,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                2
+            ],
+            "Scale": [
+                0.13,
+                0.55,
+                0.13
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "knee_L",
+            "ParentId": "thigh_L",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                -0.3,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.12,
+                0.12,
+                0.12
+            ],
+            "ColorHex": "#b08d6f",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "calf_L",
+            "ParentId": "knee_L",
+            "Shape": "Capsule",
+            "Position": [
+                0.0,
+                -0.28,
+                -0.02
+            ],
+            "Rotation": [
+                2,
+                0,
+                0
+            ],
+            "Scale": [
+                0.11,
+                0.5,
+                0.11
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "foot_L",
+            "ParentId": "calf_L",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                -0.28,
+                0.08
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.12,
+                0.08,
+                0.24
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "thigh_R",
+            "ParentId": "pelvis",
+            "Shape": "Capsule",
+            "Position": [
+                0.14,
+                -0.3,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                -2
+            ],
+            "Scale": [
+                0.13,
+                0.55,
+                0.13
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "knee_R",
+            "ParentId": "thigh_R",
+            "Shape": "Sphere",
+            "Position": [
+                0.0,
+                -0.3,
+                0.0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.12,
+                0.12,
+                0.12
+            ],
+            "ColorHex": "#b08d6f",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "calf_R",
+            "ParentId": "knee_R",
+            "Shape": "Capsule",
+            "Position": [
+                0.0,
+                -0.28,
+                -0.02
+            ],
+            "Rotation": [
+                2,
+                0,
+                0
+            ],
+            "Scale": [
+                0.11,
+                0.5,
+                0.11
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
+        },
+        {
+            "Id": "foot_R",
+            "ParentId": "calf_R",
+            "Shape": "Box",
+            "Position": [
+                0.0,
+                -0.28,
+                0.08
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.12,
+                0.08,
+                0.24
+            ],
+            "ColorHex": "#bd9a7a",
+            "Material": "Plastic",
+            "Operation": "Union"
         }
-    ]
+    ],
+    "Timeline": []
 }

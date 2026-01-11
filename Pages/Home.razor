@@ -22,6 +22,21 @@
             </div>
         </div>
     }
+    <!-- Death Screen Overlay -->
+    @if (State.IsDead)
+    {
+        <div class="death-overlay">
+            <h1>SYSTEM CRITICAL</h1>
+            <p>Vital signs offline.</p>
+            <div class="death-actions">
+                <button class="respawn-btn" @onclick="RespawnPlayer">
+                    REBOOT SYSTEM 
+                    <span class="cost">(@(State.Credits >= 50 ? "50 Credits" : (State.Credits > 0 ? "ALL Credits" : "Free")))</span>
+                </button>
+            </div>
+        </div>
+    }
+
     @if (State.IsLoading)
     {
         <div class="loading-overlay">
@@ -96,9 +111,28 @@
         <div class="hud">
             <div class="hud-item credits">💰 @State.Credits Credits</div>
             <div class="hud-item stats-card">
-                <div class="stat"><span class="icon">❤️</span> @State.HP / @State.MaxHP</div>
-                <div class="stat"><span class="icon">⚔️</span> @State.AttackPower ATK</div>
-                <div class="stat"><span class="icon">🛡️</span> @State.Defense DEF</div>
+                <div style="font-size: 1.2rem; margin-bottom: 5px;">
+                    <span class="level-badge">@State.Level</span>
+                    @State.PlayerName
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #aaa;">
+                    <span>HP: @State.HP / @State.MaxHP</span>
+                    <span>EXP: @State.CurrentExp / @State.NextLevelExp</span>
+                </div>
+
+                <div class="hp-bar-container">
+                    <div class="hp-bar-fill" style="width: @(GetHPPercent())%;"></div>
+                </div>
+                
+                <div class="exp-bar-container">
+                     <div class="exp-bar-fill" style="width: @(GetExpPercent())%;"></div>
+                </div>
+
+                <div style="margin-top: 10px; font-size: 0.9rem; border-top: 1px solid #555; padding-top: 5px;">
+                    <div>⚔️ ATK: @State.AttackPower</div>
+                    <div>🛡️ DEF: @State.Defense</div>
+                </div>
             </div>
             <div class="hud-item gear-card">
                 <div class="gear-slot">⚔️ @State.EquippedWeapon</div>
@@ -229,25 +263,62 @@
             await JSRuntime.InvokeVoidAsync("Scrapper3000.updateStats", State.AttackPower);
             await JSRuntime.InvokeVoidAsync("Scrapper3000.updateGear", State.EquippedWeapon, State.EquippedArmor);
 
-            State.OnUIChange += HandleStateChange;
+            State.OnStateChanged += HandleSaveTrigger; 
+            State.OnVisualUpdate += HandleVisualUpdate;
+            State.OnRespawnTriggered += HandleRespawn;
+            State.OnPlayerDied += HandleDeath;
         }
     }
 
-    private async void HandleStateChange()
+    private void RespawnPlayer() => State.Respawn();
+
+    private async void HandleDeath()
+    {
+        await InvokeAsync(async () =>
+        {
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.playDeathAnimation");
+            StateHasChanged();
+        });
+    }
+
+    private async void HandleRespawn()
     {
         await InvokeAsync(async () => 
         {
-            Console.WriteLine($"[RAZOR] UI Update: N={State.IsNaming}, I={State.IntroComplete}, P={State.PlayerName}");
+            // State.Respawn() already handled logic, just need to sync engine
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.respawnPlayer");
             StateHasChanged();
-            
-            // Debounced Cloud Save
+        });
+    }
+
+    // Updates UI and syncs with 3D engine (Cheap)
+    private async void HandleVisualUpdate()
+    {
+        await InvokeAsync(async () => 
+        {
+            StateHasChanged();
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateStats", State.AttackPower);
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateGear", State.EquippedWeapon, State.EquippedArmor);
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.setPaused", State.IsPaused);
+        });
+    }
+
+    // Queues the Cloud/Local Save (Expensive/Debounced)
+    private async void HandleSaveTrigger()
+    {
+        await InvokeAsync(async () => 
+        {
+            // Debounce Logic
             _saveCts?.Cancel();
             _saveCts = new CancellationTokenSource();
             var token = _saveCts.Token;
             
             _ = Task.Run(async () => {
                 try {
-                    await Task.Delay(5000, token);
+                    // 30 second delay for Cloud, 2 seconds for Local
+                    int delay = _storageMode == "firebase" ? 30000 : 2000;
+                    await Task.Delay(delay, token);
+                    
                     if (!token.IsCancellationRequested) {
                         try 
                         {
@@ -261,10 +332,6 @@
                     }
                 } catch (TaskCanceledException) {}
             });
-
-            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateStats", State.AttackPower);
-            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateGear", State.EquippedWeapon, State.EquippedArmor);
-            await JSRuntime.InvokeVoidAsync("Scrapper3000.setPaused", State.IsPaused);
         });
     }
 
@@ -366,6 +433,13 @@
     [JSInvokable]
     public void SellItem(string material) => State.SellItem(material);
 
+    [JSInvokable]
+    public void AddExperience(int amount)
+    {
+        State.AddExperience(amount);
+        StateHasChanged();
+    }
+
     private async Task SetGender(string gender)
     {
         State.UpdateCustomization(gender, State.HairLength, State.HairColor);
@@ -413,10 +487,23 @@
 
     public void Dispose()
     {
-        State.OnUIChange -= HandleStateChange;
+        State.OnStateChanged -= HandleSaveTrigger;
+        State.OnVisualUpdate -= HandleVisualUpdate;
         _saveCts?.Cancel();
         _saveCts?.Dispose();
         _objRef?.Dispose();
+    }
+
+    private double GetHPPercent()
+    {
+        if (State.MaxHP == 0) return 0;
+        return (double)State.HP / State.MaxHP * 100;
+    }
+
+    private double GetExpPercent()
+    {
+        if (State.NextLevelExp == 0) return 0;
+        return (double)State.CurrentExp / State.NextLevelExp * 100;
     }
 }
 
@@ -494,7 +581,7 @@
     .backpack-hud {
         position: absolute;
         top: 210px;
-        left: 20px;
+        right: 20px;
         width: 180px;
         background: rgba(15, 15, 20, 0.85);
         border: 2px solid #444;
@@ -503,7 +590,7 @@
         font-family: 'Courier New', monospace;
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         pointer-events: none;
-        animation: slideInLeft 0.5s ease-out;
+        animation: slideInRight 0.5s ease-out;
     }
 
     .backpack-header {
@@ -554,8 +641,8 @@
         padding: 10px 0;
     }
 
-    @@keyframes slideInLeft {
-        from { transform: translateX(-100%); opacity: 0; }
+    @@keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
     }
 
@@ -675,14 +762,8 @@
         font-weight: bold;
     }
 
-    /* Stats Card */
-    .stats-card {
-        display: flex;
-        gap: 15px;
-        background: rgba(0,0,0,0.4) !important;
-        border: 1px solid #444;
-    }
-
+    /* Stats Card Removed (Moved to top) */
+    
     .stat {
         display: flex;
         align-items: center;
@@ -718,6 +799,63 @@
         border-radius: 5px;
         cursor: pointer;
         font-size: 1.1rem;
+    }
+
+    /* Death Overlay */
+    .death-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(20, 0, 0, 0.85);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        animation: fadeIn 2s ease-in;
+    }
+
+    .death-overlay h1 {
+        color: #ff3333;
+        font-size: 4rem;
+        text-shadow: 0 0 20px red;
+        margin-bottom: 0px;
+        font-family: 'Segoe UI', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 5px;
+    }
+
+    .death-overlay p {
+        color: #aaa;
+        font-size: 1.5rem;
+        margin-bottom: 40px;
+    }
+
+    .respawn-btn {
+        background: transparent;
+        border: 2px solid #ff3333;
+        color: #ff3333;
+        padding: 15px 40px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+    }
+
+    .respawn-btn:hover {
+        background: #ff3333;
+        color: black;
+        box-shadow: 0 0 30px #ff0000;
+    }
+
+    .respawn-btn .cost {
+        display: block;
+        font-size: 0.8rem;
+        margin-top: 5px;
+        opacity: 0.8;
     }
 
     /* Landing Page & Loading */
@@ -1059,5 +1197,51 @@
         font-size: 1.2rem;
         color: #00ff66;
         font-weight: bold;
+    }
+
+    .level-badge {
+        display: inline-block;
+        background: #FFD700;
+        color: #000;
+        font-weight: bold;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+        text-align: center;
+        margin-right: 10px;
+        border: 2px solid #b8860b;
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+
+    .hp-bar-container {
+        width: 100%;
+        height: 12px;
+        background: #333;
+        border: 1px solid #777;
+        margin-top: 5px;
+        position: relative;
+    }
+
+    .hp-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff4d4d, #cc0000);
+        transition: width 0.3s ease;
+    }
+
+    .exp-bar-container {
+        width: 100%;
+        height: 4px;
+        background: #222;
+        border: 1px solid #444;
+        margin-top: 2px;
+        position: relative;
+    }
+
+    .exp-bar-fill {
+        height: 100%;
+        background: #00ccff;
+        transition: width 0.3s ease;
     }
 </style>

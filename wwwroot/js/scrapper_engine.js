@@ -17,6 +17,7 @@ window.Scrapper3000 = {
     rats: [],
     wolves: [],
     isPaused: false,
+    tempVector: new BABYLON.Vector3.Zero(),
     isWhackKeyDown: false,
     autoWhackTimer: 0,
 
@@ -74,6 +75,82 @@ window.Scrapper3000 = {
         this.spawnIntroItems();
 
         console.log("Scrapper 3000: Shed Initialized.");
+    },
+
+    playDeathAnimation: function () {
+        if (this.player && !this.isPlayerDead) {
+            this.isPlayerDead = true;
+
+            // Disable Collisions to prevent physics "pop" or "float"
+            this.player.checkCollisions = false;
+
+            // Stop any walking animations
+            this.scene.stopAnimation(this.player);
+
+            // "Fall over" animation
+            // Loop mode 2 = CONSTANT (Stops at end)
+            BABYLON.Animation.CreateAndStartAnimation("death_fall", this.player, "rotation.x", 60, 30, this.player.rotation.x, -Math.PI / 2, 2, null, () => {
+                console.log("Death rotation complete.");
+                this.player.rotation.x = -Math.PI / 2;
+            });
+
+            // Adjust height (Don't rise)
+            BABYLON.Animation.CreateAndStartAnimation("death_drop", this.player, "position.y", 60, 30, this.player.position.y, 0.1, 2, null);
+
+            console.log("DEATH SEQUENCE STARTED. Collisions disabled.");
+
+            // Reset Mob Aggression
+            this.rats.forEach(r => {
+                if (r.aiState === "AGGRESSIVE") {
+                    r.aiState = "PICK";
+                    r.currentTarget = null;
+                }
+            });
+            this.wolves.forEach(w => {
+                if (w.aiState === "AGGRESSIVE") {
+                    w.aiState = "PICK";
+                    w.currentTarget = null;
+                }
+            });
+        }
+    },
+
+    respawnPlayer: function () {
+        if (this.player) {
+            this.isPlayerDead = false;
+
+            // Reset Rotation (Stand up)
+            this.player.rotation.x = 0;
+            this.player.rotation.z = 0;
+
+            // Re-enable collisions
+            this.player.checkCollisions = true;
+
+            // Teleport to Medic Tent area (approx coords)
+            this.player.position = new BABYLON.Vector3(5, 0.4, 15);
+            this.dotNetHelper.invokeMethodAsync('SetDialogue', "The medic drags you back to consciousness. 'Close call, Scrapper.'");
+        }
+    },
+
+    dispose: function () {
+        // Dispose of all scene resources
+        this.scene.dispose();
+        this.engine.dispose();
+        this.canvas = null;
+        this.engine = null;
+        this.scene = null;
+        this.camera = null;
+        this.dotNetHelper = null;
+        this.interactables = [];
+        this.player = null;
+        this.keys = {};
+        this.playerLimbs = {};
+        this.currentWeaponMesh = null;
+        this.currentArmorMesh = null;
+        this.scrapPiles = [];
+        this.rats = [];
+        this.wolves = [];
+        console.log("Scrapper 3000: Disposed.");
     },
 
     buildShed: function () {
@@ -197,7 +274,7 @@ window.Scrapper3000 = {
         console.log("Scrapper 3000: Exiting Shed...");
         // Fade effect or just teleport
         if (this.player) {
-            this.player.position = new BABYLON.Vector3(0, 0.1, 15);
+            this.player.position = new BABYLON.Vector3(0, 2.0, 15);
             this.spawnJunkyard();
         }
     },
@@ -207,7 +284,7 @@ window.Scrapper3000 = {
         await this.switchToThirdPerson(gender, hairLength, hairColor);
         this.spawnJunkyard();
         if (this.player) {
-            this.player.position = new BABYLON.Vector3(0, 0.1, 15);
+            this.player.position = new BABYLON.Vector3(0, 2.0, 15);
         }
     },
 
@@ -361,6 +438,7 @@ window.Scrapper3000 = {
     setupWolfInteractions: function (wolf) {
         wolf.getChildMeshes().forEach(m => {
             m.isInteractable = true;
+            m.isPickable = true; // RESTORE: Mobs need to be hit!
             m.actionManager = new BABYLON.ActionManager(this.scene);
 
             m.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, () => {
@@ -383,6 +461,7 @@ window.Scrapper3000 = {
     setupRatInteractions: function (rat) {
         rat.getChildMeshes().forEach(m => {
             m.isInteractable = true;
+            m.isPickable = true; // RESTORE: Mobs need to be hit!
             m.actionManager = new BABYLON.ActionManager(this.scene);
 
             // Hover Highlight (Red for hostiles)
@@ -503,6 +582,7 @@ window.Scrapper3000 = {
     setupScrapPile: function (pile) {
         pile.getChildMeshes().forEach(m => {
             m.isInteractable = true;
+            m.isPickable = true; // RESTORE: Need to hit scrap piles too!
             m.actionManager = new BABYLON.ActionManager(this.scene);
 
             // Hover Highlight
@@ -641,6 +721,12 @@ window.Scrapper3000 = {
         }
 
         mesh.material = mat;
+
+        // CRITICAL FIX: Disable physics/picking on ALL model parts by default.
+        // This prevents the "Baron Munchausen" effect where the player collides with their own body parts.
+        mesh.checkCollisions = false;
+        mesh.isPickable = false;
+
         return mesh;
     },
 
@@ -670,17 +756,36 @@ window.Scrapper3000 = {
         // Update hair on initial load
         this.updateHairOnMesh(player, hairLength, hairColor);
 
-        // 3. Attach Gear from JSON
-        const backpack = await this.loadModel("data/models/Backpack.json");
-        backpack.parent = player;
-        backpack.position = new BABYLON.Vector3(0, 0.4, -0.2);
+        this.player = player;
 
         // Player Collision
-        player.checkCollisions = true;
-        player.ellipsoid = new BABYLON.Vector3(0.3, 0.9, 0.3);
-        player.ellipsoidOffset = new BABYLON.Vector3(0, 0.9, 0);
+        player.checkCollisions = true; // Use ellipsoid for world collisions
+        player.ellipsoid = new BABYLON.Vector3(0.3, 0.9, 0.3); // H=1.8, W=0.6, D=0.6
+        player.ellipsoidOffset = new BABYLON.Vector3(0, 0.9, 0); // Center at pivot + 0.9 (feet at 0, top at 1.8)
 
-        this.player = player;
+        this.cachePlayerLimbs();
+
+        // 3. Attach Backpack to Torso (Upper Back)
+        const backpack = await this.loadModel("data/models/Backpack.json");
+        if (backpack) {
+            backpack.checkCollisions = false; // CRITICAL: Prevent self-collision/rising
+            // Also recursively disable for children just in case
+            backpack.getChildMeshes().forEach(m => m.checkCollisions = false);
+
+            if (this.playerLimbs.torso) {
+                backpack.parent = this.playerLimbs.torso;
+                // Adjust for chest (Box) vs Spine. 
+                // Chest is box. Back is usually -Z or +Z depending on modeling. 
+                // Assuming standard: 0, 0, -0.2 (behind).
+                // Local to Chest transform.
+                backpack.position = new BABYLON.Vector3(0, 0, -0.15);
+                backpack.rotation = new BABYLON.Vector3(0, 0, 0);
+            } else {
+                // Fallback if no torso found
+                backpack.parent = player;
+                backpack.position = new BABYLON.Vector3(0, 1.2, -0.2);
+            }
+        }
 
         // 4. Create 3rd Person Camera
         var camera = new BABYLON.ArcRotateCamera("ThirdPersonCam", -Math.PI / 2, Math.PI / 2.5, 4, player.position, this.scene);
@@ -690,7 +795,6 @@ window.Scrapper3000 = {
         camera.upperRadiusLimit = 10;
 
         this.camera = camera;
-        this.cachePlayerLimbs();
 
         // Initial Gear
         this.updateGear("Rusty Stick", "Basic Overalls");
@@ -726,9 +830,23 @@ window.Scrapper3000 = {
     },
 
     setupThirdPersonControls: function () {
-        this.keys = {};
-        window.addEventListener("keydown", (e) => { this.keys[e.key.toLowerCase()] = true; });
-        window.addEventListener("keyup", (e) => { this.keys[e.key.toLowerCase()] = false; });
+        this.inputMap = {};
+
+        // Ensure ActionManager exists
+        if (!this.scene.actionManager) {
+            this.scene.actionManager = new BABYLON.ActionManager(this.scene);
+        }
+
+        this.scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyDownTrigger, (evt) => {
+            this.inputMap[evt.sourceEvent.key.toLowerCase()] = evt.sourceEvent.type == "keydown";
+        }));
+        this.scene.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnKeyUpTrigger, (evt) => {
+            this.inputMap[evt.sourceEvent.key.toLowerCase()] = evt.sourceEvent.type == "keydown";
+        }));
+
+        // Keep Window listeners as backup/alternatives if ActionManager loses focus
+        window.addEventListener("keydown", (e) => { this.inputMap[e.key.toLowerCase()] = true; });
+        window.addEventListener("keyup", (e) => { this.inputMap[e.key.toLowerCase()] = false; });
 
         // Attack Trigger
         window.addEventListener("mousedown", (e) => {
@@ -751,8 +869,10 @@ window.Scrapper3000 = {
             if (e.code === "Space") this.isWhackKeyDown = false;
         });
 
+        // Mouse Look (handled by ArcRotateCamera)
+
         this.scene.onBeforeRenderObservable.add(() => {
-            if (!this.player || !this.camera || this.isPaused) return;
+            if (!this.player || !this.camera || this.isPaused || this.isPlayerDead) return;
 
             const dt = this.engine.getDeltaTime() / 1000;
 
@@ -767,24 +887,24 @@ window.Scrapper3000 = {
             const turnSpeed = 0.04;
             const gravity = -0.15; // Vertical force
 
-            // 1. Rotation (A/D)
-            if (this.keys["a"]) {
+            // 1. Rotation (A/D) using inputMap
+            if (this.inputMap["a"]) {
                 this.player.rotation.y -= turnSpeed;
             }
-            if (this.keys["d"]) {
+            if (this.inputMap["d"]) {
                 this.player.rotation.y += turnSpeed;
             }
 
-            // 2. Movement (W/S)
+            // 2. Movement (W/S) using inputMap
             let moveVector = BABYLON.Vector3.Zero();
 
             // Forward vector is based on mesh rotation
             var forward = this.player.forward;
 
-            if (this.keys["w"]) {
+            if (this.inputMap["w"]) {
                 moveVector.addInPlace(forward.scale(moveSpeed));
             }
-            if (this.keys["s"]) {
+            if (this.inputMap["s"]) {
                 moveVector.addInPlace(forward.scale(-moveSpeed * 0.5)); // Slower backward
             }
 
@@ -795,7 +915,7 @@ window.Scrapper3000 = {
             this.player.moveWithCollisions(moveVector);
 
             // 5. Walking Animation
-            const isMoving = this.keys["w"] || this.keys["s"];
+            const isMoving = this.inputMap["w"] || this.inputMap["s"];
             this.animateWalk(this.engine.getDeltaTime() / 1000, isMoving);
         });
     },
@@ -819,7 +939,9 @@ window.Scrapper3000 = {
             }
 
             // Subtle Bobbing
-            if (limbs.torso) limbs.torso.position.y = 0.9 + Math.sin(this.animTimer * 2) * 0.05;
+            if (limbs.torso && this.initialTorsoY !== undefined) {
+                limbs.torso.position.y = this.initialTorsoY + Math.sin(this.animTimer * 2) * 0.05;
+            }
         } else {
             // Reset to Idle
             const lerp = 0.15;
@@ -831,12 +953,14 @@ window.Scrapper3000 = {
                 limbs.armR.rotation.x = BABYLON.Scalar.LerpAngle(limbs.armR.rotation.x, 0, lerp);
             }
 
-            if (limbs.torso) limbs.torso.position.y = BABYLON.Scalar.Lerp(limbs.torso.position.y, 0.9, lerp);
+            if (limbs.torso && this.initialTorsoY !== undefined) {
+                limbs.torso.position.y = BABYLON.Scalar.Lerp(limbs.torso.position.y, this.initialTorsoY, lerp);
+            }
         }
     },
 
     whack: function (target) {
-        if (this.isWhacking || !this.player || this.isPaused) return;
+        if (this.isWhacking || !this.player || this.isPaused || this.isPlayerDead) return;
         this.isWhacking = true;
         this.currentClickTarget = target;
         this.currentWhackDamage = this.attackPower;
@@ -873,7 +997,7 @@ window.Scrapper3000 = {
 
         if (target) {
             let originalTarget = target;
-            while (target.parent && !target.name.includes("ScrapPile") && !target.name.includes("PostApocRat")) {
+            while (target.parent && !target.name.includes("ScrapPile") && !target.name.includes("PostApocRat") && !target.name.includes("BadlandsWolf")) {
                 target = target.parent;
             }
 
@@ -900,7 +1024,10 @@ window.Scrapper3000 = {
         if (!rat.stats) return;
         console.log("Rat Hit! HP: " + rat.stats.HP);
 
-        rat.stats.HP -= damage;
+        const netDamage = Math.max(1, damage - Math.floor((rat.stats.DEF || 0) / 2));
+        rat.stats.HP -= netDamage;
+
+        this.showFloatingDamage(rat.position.clone(), netDamage, "#ff0000");
         rat.aiState = "AGGRESSIVE"; // Enrage the rat!
 
         // Create/Update Health Bar
@@ -917,6 +1044,9 @@ window.Scrapper3000 = {
             this.rats = this.rats.filter(r => r !== rat);
 
             if (rat.healthBar) rat.healthBar.dispose();
+
+            // Grant EXP
+            this.dotNetHelper.invokeMethodAsync('AddExperience', rat.stats.ExpReward || 10);
             rat.dispose();
 
             this.dotNetHelper.invokeMethodAsync('SetDialogue', "Rat neutralized.");
@@ -1069,19 +1199,53 @@ window.Scrapper3000 = {
     cachePlayerLimbs: function () {
         if (!this.player) return;
         const children = this.player.getChildMeshes();
-        this.playerLimbs = {
-            legL: children.find(m => m.name.includes("leg_l")),
-            legR: children.find(m => m.name.includes("leg_r")),
-            armL: children.find(m => m.name.includes("arm_l")),
-            armR: children.find(m => m.name.includes("arm_r")),
-            torso: children.find(m => m.name.includes("torso"))
+
+        // Helper to find best match
+        const findMesh = (keywords) => {
+            // keywords is array of priority strings. FIRST match in array wins.
+            for (let k of keywords) {
+                const match = children.find(m => m.name.toLowerCase().includes(k.toLowerCase()));
+                if (match) return match;
+            }
+            return null;
         };
-        console.log("Scrapper 3000: Limbs cached.");
+
+        this.playerLimbs = {
+            // Support old "leg_l" OR new "thigh_L" / "leg_upper_left" styles
+            legL: findMesh(["leg_upper_left", "thigh_l", "leg_l"]),
+            legR: findMesh(["leg_upper_right", "thigh_r", "leg_r"]),
+            armL: findMesh(["arm_upper_l", "arm_l"]),
+            armR: findMesh(["arm_upper_r", "arm_r"]),
+
+            // Prioritize CHEST (Upper) over SPINE/WAIST (Lower) for correct backpack placement
+            torso: findMesh(["chest", "torso", "spine"]),
+
+            head: findMesh(["head"])
+        };
+
+        if (this.playerLimbs.torso) {
+            this.initialTorsoY = this.playerLimbs.torso.position.y;
+        }
+
+        console.log("Scrapper 3000: Limbs cached for Model: " + (this.playerLimbs.torso ? "Success" : "Partial Failure"));
     },
 
 
     updateGear: async function (weaponName, armorName) {
         if (!this.player || !this.playerLimbs.armR) return;
+
+        // HELPER: Prevent the "Elevator Glitch"
+        const disableCollisions = (mesh) => {
+            if (!mesh) return;
+            mesh.checkCollisions = false;
+            mesh.isPickable = false; // Optimization
+            if (mesh.getChildMeshes) {
+                mesh.getChildMeshes().forEach(m => {
+                    m.checkCollisions = false;
+                    m.isPickable = false;
+                });
+            }
+        };
 
         // Guard: Only reload if the names have actually changed
         if (this.lastEquippedWeapon === weaponName && this.lastEquippedArmor === armorName) {
@@ -1110,6 +1274,7 @@ window.Scrapper3000 = {
         }
 
         if (weapon) {
+            disableCollisions(weapon); // <--- ADDED
             weapon.parent = this.playerLimbs.armR;
 
             // Adjust to fit in hand
@@ -1141,6 +1306,210 @@ window.Scrapper3000 = {
         }
 
         // 2. Armor/Backpack Logic
+        if (this.currentArmorParts) {
+            this.currentArmorParts.forEach(p => p.dispose());
+            this.currentArmorParts = [];
+        }
+
+        if (armorName.includes("Overalls") && this.player) {
+            // Determine material logic or model loading
+            const isFaded = armorName.includes("Faded");
+            const armorPath = isFaded ? "data/models/DustyFadedOveralls.json" : null;
+
+            if (armorPath) {
+                const overalls = await this.loadModel(armorPath);
+
+                if (overalls) {
+                    disableCollisions(overalls); // <--- ADDED
+                    // Detach parts
+                    const parts = overalls.getChildMeshes();
+                    // ... (rest of overall logic) ...
+                    const hips = parts.find(m => m.name.includes("hips"));
+                    const torso = parts.find(m => m.name.includes("torso"));
+                    const leftLeg = parts.find(m => m.name.includes("left_leg"));
+                    const rightLeg = parts.find(m => m.name.includes("right_leg"));
+
+                    if (this.playerLimbs.torso) {
+                        if (hips) {
+                            hips.setParent(this.playerLimbs.torso);
+                            hips.position = new BABYLON.Vector3(0, -0.4, 0);
+                            hips.rotation = new BABYLON.Vector3(0, 0, 0);
+                            this.currentArmorParts.push(hips);
+                        }
+                        if (torso) {
+                            torso.setParent(this.playerLimbs.torso);
+                            torso.position = new BABYLON.Vector3(0, 0, 0);
+                            torso.rotation = new BABYLON.Vector3(0, 0, 0);
+                            this.currentArmorParts.push(torso);
+                        }
+                    }
+                    if (this.playerLimbs.legL && leftLeg) {
+                        leftLeg.setParent(this.playerLimbs.legL);
+                        leftLeg.position = new BABYLION.Vector3(0, 0, 0);
+                        leftLeg.rotation = new BABYLON.Vector3(0, 0, 0);
+                        this.currentArmorParts.push(leftLeg);
+                    }
+                    if (this.playerLimbs.legR && rightLeg) {
+                        rightLeg.setParent(this.playerLimbs.legR);
+                        rightLeg.position = new BABYLON.Vector3(0, 0, 0);
+                        rightLeg.rotation = new BABYLON.Vector3(0, 0, 0);
+                        this.currentArmorParts.push(rightLeg);
+                    }
+
+                    overalls.dispose();
+                }
+            }
+        }
+        else if (armorName.includes("Helmet")) {
+            const helmetName = armorName.replace(/\s/g, "");
+            const helmet = await this.loadModel(`data/models/${helmetName}.json`);
+
+            if (helmet && this.playerLimbs.head) {
+                disableCollisions(helmet); // <--- ADDED
+                helmet.parent = this.playerLimbs.head;
+                // Zero out transforms - the model is built around the head center
+                helmet.position = new BABYLON.Vector3(0, 0, 0);
+                helmet.rotation = new BABYLON.Vector3(0, 0, 0);
+                this.currentArmorParts.push(helmet);
+            }
+        } else if (armorName.includes("Boots")) {
+            // Boots Logic - Split model into Left/Right and attach to legs
+            const bootName = armorName.replace(/\s/g, "");
+            const boots = await this.loadModel(`data/models/${bootName}.json`);
+
+            if (boots) {
+                disableCollisions(boots); // <--- ADDED
+                const parts = boots.getChildMeshes();
+                const leftBoot = parts.find(m => m.name.includes("Left"));
+                const rightBoot = parts.find(m => m.name.includes("Right"));
+
+                // If the JSON structure has these as roots (parents of other parts), we can just attach them
+                // We need to detach them from the main "boots" empty container first
+
+                if (leftBoot && this.playerLimbs.legL) {
+                    leftBoot.setParent(this.playerLimbs.legL);
+                    // Leg is 0.9 high, pivot at 0.45. Bottom is -0.45.
+                    leftBoot.position = new BABYLON.Vector3(0, -0.45, 0);
+                    leftBoot.rotation = new BABYLON.Vector3(0, 0, 0);
+                    this.currentArmorParts.push(leftBoot);
+                }
+
+                if (rightBoot && this.playerLimbs.legR) {
+                    rightBoot.setParent(this.playerLimbs.legR);
+                    rightBoot.position = new BABYLON.Vector3(0, -0.45, 0);
+                    rightBoot.rotation = new BABYLON.Vector3(0, 0, 0);
+                    this.currentArmorParts.push(rightBoot);
+                }
+
+                boots.dispose(); // Cleanup container
+            }
+        } else if (armorName.includes("Vest")) {
+            // Vest Logic - Attach to Torso
+            const vestName = armorName.replace(/\s/g, "");
+            const vest = await this.loadModel(`data/models/${vestName}.json`);
+
+            if (vest && this.playerLimbs.torso) {
+                disableCollisions(vest); // <--- ADDED
+                vest.parent = this.playerLimbs.torso;
+                this.currentArmorParts.push(vest);
+            }
+        } else if (armorName.includes("Gloves")) {
+            // Gloves Logic - Split Left/Right, attach to Arms
+            const gloveName = armorName.replace(/\s/g, "");
+            const gloves = await this.loadModel(`data/models/${gloveName}.json`);
+
+            if (gloves) {
+                disableCollisions(gloves); // <--- ADDED
+                const parts = gloves.getChildMeshes();
+                const cuffL = parts.find(m => m.name.includes("L_Wrist_Cuff"));
+                const cuffR = parts.find(m => m.name.includes("R_Wrist_Cuff"));
+
+                if (cuffL && this.playerLimbs.armL) {
+                    cuffL.setParent(this.playerLimbs.armL);
+                    // Arm height ~0.7. Hand should be at bottom ~ -0.35 if pivoted center
+                    cuffL.position = new BABYLON.Vector3(0, -0.35, 0);
+                    cuffL.rotation = new BABYLON.Vector3(0, 0, 0);
+                    this.currentArmorParts.push(cuffL);
+                }
+
+                if (cuffR && this.playerLimbs.armR) {
+                    cuffR.setParent(this.playerLimbs.armR);
+                    cuffR.position = new BABYLON.Vector3(0, -0.35, 0);
+                    cuffR.rotation = new BABYLON.Vector3(0, 0, 0);
+                    this.currentArmorParts.push(cuffR);
+                }
+
+                gloves.dispose();
+            }
+        } else if (armorName.includes("Leggings")) {
+            // Leggings Logic - Split Waist/Legs
+            const legName = armorName.replace(/\s/g, "");
+            const leggings = await this.loadModel(`data/models/${legName}.json`);
+
+            if (leggings) {
+                disableCollisions(leggings); // <--- ADDED
+                const parts = leggings.getChildMeshes();
+                const waist = parts.find(m => m.name.includes("waist_band"));
+                const legL = parts.find(m => m.name.includes("leg_upper_left"));
+                const legR = parts.find(m => m.name.includes("leg_upper_right"));
+
+                if (waist && this.playerLimbs.torso) {
+                    waist.setParent(this.playerLimbs.torso);
+                    // Waist (belt) is at 1.05. Torso pivot is center.
+                    // Need to bring it down to hips. ~ -0.4
+                    waist.position = new BABYLON.Vector3(0, -0.40, 0);
+                    waist.rotation = new BABYLON.Vector3(0, 0, 0);
+                    this.currentArmorParts.push(waist);
+                }
+
+                if (legL && this.playerLimbs.legL) {
+                    legL.setParent(this.playerLimbs.legL);
+                    // Leg mesh starts at -0.25 Y relative to root.
+                    // Bone Pivot is top. So we need to position it so top is at 0.
+                    // Leg mesh center is roughly -0.25 down.
+                    // We might need to adjust based on visual fit.
+                    legL.position = new BABYLON.Vector3(0, -0.4, 0);
+                    legL.rotation = new BABYLON.Vector3(0, 0, 0);
+                    this.currentArmorParts.push(legL);
+                }
+
+                if (legR && this.playerLimbs.legR) {
+                    legR.setParent(this.playerLimbs.legR);
+                    legR.position = new BABYLON.Vector3(0, -0.4, 0);
+                    legR.rotation = new BABYLON.Vector3(0, 0, 0);
+                    this.currentArmorParts.push(legR);
+                }
+                leggings.dispose();
+            }
+        } else if (armorName.includes("Sleeves")) {
+            // Sleeves Logic - Split L/R, attach to Arms
+            const sleeveName = armorName.replace(/\s/g, "");
+            const sleeves = await this.loadModel(`data/models/${sleeveName}.json`);
+
+            if (sleeves) {
+                disableCollisions(sleeves); // <--- ADDED
+                const parts = sleeves.getChildMeshes();
+                const shoulderL = parts.find(m => m.name.includes("L_Shoulder_Cap"));
+                const shoulderR = parts.find(m => m.name.includes("R_Shoulder_Cap"));
+
+                if (shoulderL && this.playerLimbs.armL) {
+                    shoulderL.setParent(this.playerLimbs.armL);
+                    // Shoulder cap should be at top of arm (0.0 or slightly up)
+                    // Arm pivot is usually top.
+                    shoulderL.position = new BABYLON.Vector3(0, 0, 0);
+                    shoulderL.rotation = new BABYLON.Vector3(0, 0, 0);
+                    this.currentArmorParts.push(shoulderL);
+                }
+
+                if (shoulderR && this.playerLimbs.armR) {
+                    shoulderR.setParent(this.playerLimbs.armR);
+                    shoulderR.position = new BABYLON.Vector3(0, 0, 0);
+                    shoulderR.rotation = new BABYLON.Vector3(0, 0, 0);
+                    this.currentArmorParts.push(shoulderR);
+                }
+                sleeves.dispose();
+            }
+        }
         if (this.playerLimbs.torso) {
             // Ensure backpack (if any) is parented to torso for better movement
             const backpack = this.player.getChildren().find(c => c.name === "Backpack");
@@ -1156,8 +1525,17 @@ window.Scrapper3000 = {
         this.updateHairOnMesh(this.player, length, color);
     },
 
+    updatePlayer: function () {
+        if (!this.player || this.isPlayerDead) return;
+
+        var deltaTime = this.scene.getEngine().getDeltaTime() / 1000;
+
+        // Player Input / Movement Logic would usually be here or handled via onBeforeRender
+        // Current implementation handles input via scene.actionManager in setupControls
+    },
+
     updateRats: function () {
-        const deltaTime = this.scene.getEngine().getDeltaTime() / 1000;
+        var deltaTime = this.scene.getEngine().getDeltaTime() / 1000;
 
         this.rats.forEach(rat => {
             if (!rat || rat._isDisposed) return;
@@ -1188,8 +1566,8 @@ window.Scrapper3000 = {
                 }
 
                 // Smooth Rotation
-                const diff = rat.currentTarget.position.subtract(rat.position);
-                const targetRotation = Math.atan2(diff.x, diff.z);
+                rat.currentTarget.position.subtractToRef(rat.position, this.tempVector);
+                const targetRotation = Math.atan2(this.tempVector.x, this.tempVector.z);
                 let rotationDiff = targetRotation - rat.rotation.y;
 
                 // Keep diff in -PI to PI range
@@ -1199,8 +1577,8 @@ window.Scrapper3000 = {
                 rat.rotation.y += rotationDiff * 0.1; // Smooth turn
 
                 // Forward Movement
-                const forward = new BABYLON.Vector3(Math.sin(rat.rotation.y), 0, Math.cos(rat.rotation.y));
-                rat.position.addInPlace(forward.scale(0.04));
+                this.tempVector.set(Math.sin(rat.rotation.y), 0, Math.cos(rat.rotation.y));
+                rat.position.addInPlace(this.tempVector.scaleInPlace(0.04));
 
                 // Procedural Walk
                 this.animateRatWalk(rat);
@@ -1214,20 +1592,26 @@ window.Scrapper3000 = {
                 this.resetRatLegs(rat);
             }
             else if (rat.aiState === "AGGRESSIVE") {
+                if (this.isPlayerDead) {
+                    rat.aiState = "PICK";
+                    rat.currentTarget = null;
+                    return;
+                }
+
                 // Chase Player
-                const diff = this.player.position.subtract(rat.position);
-                const dist = diff.length();
+                this.player.position.subtractToRef(rat.position, this.tempVector);
+                const dist = this.tempVector.length();
 
                 // Rotation
-                const targetRotation = Math.atan2(diff.x, diff.z);
+                const targetRotation = Math.atan2(this.tempVector.x, this.tempVector.z);
                 let rotationDiff = targetRotation - rat.rotation.y;
                 while (rotationDiff < -Math.PI) rotationDiff += Math.PI * 2;
                 while (rotationDiff > Math.PI) rotationDiff -= Math.PI * 2;
                 rat.rotation.y += rotationDiff * 0.15;
 
                 if (dist > 1.2) {
-                    const forward = new BABYLON.Vector3(Math.sin(rat.rotation.y), 0, Math.cos(rat.rotation.y));
-                    rat.position.addInPlace(forward.scale(0.06)); // Chase speed
+                    this.tempVector.set(Math.sin(rat.rotation.y), 0, Math.cos(rat.rotation.y));
+                    rat.position.addInPlace(this.tempVector.scaleInPlace(0.06)); // Chase speed
                     this.animateRatWalk(rat);
                 } else {
                     // Attack
@@ -1239,7 +1623,8 @@ window.Scrapper3000 = {
                         rat.aiWaitTimer = rat.stats ? rat.stats.AtkSpeed : 2.5;
 
                         // Attack visual (quick lunge)
-                        const lunge = rat.forward.scale(0.3);
+                        this.tempVector.set(Math.sin(rat.rotation.y), 0, Math.cos(rat.rotation.y));
+                        const lunge = this.tempVector.scaleInPlace(0.3).clone(); // Clone once for animation target
                         BABYLON.Animation.CreateAndStartAnimation("rat_lunge", rat, "position", 60, 5, rat.position, rat.position.add(lunge), 2, null, () => {
                             BABYLON.Animation.CreateAndStartAnimation("rat_lunge_back", rat, "position", 60, 10, rat.position, rat.position.subtract(lunge), 2);
                         });
@@ -1257,7 +1642,10 @@ window.Scrapper3000 = {
     onWolfHit: function (wolf, damage) {
         if (!wolf.stats) return;
 
-        wolf.stats.HP -= damage;
+        const netDamage = Math.max(1, damage - Math.floor((wolf.stats.DEF || 0) / 2));
+        wolf.stats.HP -= netDamage;
+
+        this.showFloatingDamage(wolf.position.clone(), netDamage, "#ff0000");
         wolf.aiState = "AGGRESSIVE";
 
         this.updateWolfHealthBar(wolf);
@@ -1272,6 +1660,9 @@ window.Scrapper3000 = {
             const pos = wolf.position.clone();
             this.wolves = this.wolves.filter(w => w !== wolf);
             if (wolf.healthBar) wolf.healthBar.dispose();
+
+            // Grant EXP
+            this.dotNetHelper.invokeMethodAsync('AddExperience', wolf.stats.ExpReward || 50);
             wolf.dispose();
 
             this.dotNetHelper.invokeMethodAsync('SetDialogue', "Great Wolf neutralized.");
@@ -1322,19 +1713,28 @@ window.Scrapper3000 = {
 
             const distToPlayer = BABYLON.Vector3.Distance(wolf.position, this.player.position);
 
-            if (wolf.aiState === "AGGRESSIVE" || distToPlayer < 10) {
+            if (distToPlayer < 10) { // Player is within aggro range
                 wolf.aiState = "AGGRESSIVE";
+            }
 
-                const diff = this.player.position.subtract(wolf.position);
-                const targetRotation = Math.atan2(diff.x, diff.z);
+            if (wolf.aiState === "AGGRESSIVE") {
+                if (this.isPlayerDead) {
+                    wolf.aiState = "PICK";
+                    wolf.currentTarget = null;
+                    return;
+                }
+
+                // Chase logic (use scratch vector)
+                this.player.position.subtractToRef(wolf.position, this.tempVector);
+                const targetRotation = Math.atan2(this.tempVector.x, this.tempVector.z);
                 let rotationDiff = targetRotation - wolf.rotation.y;
                 while (rotationDiff < -Math.PI) rotationDiff += Math.PI * 2;
                 while (rotationDiff > Math.PI) rotationDiff -= Math.PI * 2;
                 wolf.rotation.y += rotationDiff * 0.1;
 
                 if (distToPlayer > 2.2) {
-                    const forward = new BABYLON.Vector3(Math.sin(wolf.rotation.y), 0, Math.cos(wolf.rotation.y));
-                    wolf.position.addInPlace(forward.scale(0.08)); // Faster than rat
+                    this.tempVector.set(Math.sin(wolf.rotation.y), 0, Math.cos(wolf.rotation.y));
+                    wolf.position.addInPlace(this.tempVector.scaleInPlace(0.08)); // Faster than rat
                     this.animateWolfWalk(wolf);
                 } else {
                     this.resetWolfLegs(wolf);
@@ -1343,9 +1743,15 @@ window.Scrapper3000 = {
                         this.dotNetHelper.invokeMethodAsync('TakeDamage', wolf.stats.ATK || 16);
                         wolf.aiWaitTimer = wolf.stats.AtkSpeed || 1.5;
 
-                        // Bite visual
-                        BABYLON.Animation.CreateAndStartAnimation("wolf_bite", wolf, "scaling", 60, 5, wolf.scaling.clone(), wolf.scaling.scale(1.1), 2, null, () => {
-                            BABYLON.Animation.CreateAndStartAnimation("wolf_bite_reset", wolf, "scaling", 60, 5, wolf.scaling.clone(), wolf.scaling.clone(), 2);
+                        // Bite visual (Fixed Scaling Bug)
+                        const originalScale = wolf.scaling.clone();
+                        const biteScale = originalScale.scale(1.1);
+
+                        BABYLON.Animation.CreateAndStartAnimation("wolf_bite", wolf, "scaling", 60, 5, originalScale, biteScale, 2, null, () => {
+                            // Reset to ORIGINAL scaling, not the current modified one
+                            BABYLON.Animation.CreateAndStartAnimation("wolf_bite_reset", wolf, "scaling", 60, 5, biteScale, originalScale, 2, null, () => {
+                                wolf.scaling.copyFrom(originalScale); // Hard reset to ensure drift doesn't happen
+                            });
                         });
                     }
                 }
@@ -1357,15 +1763,15 @@ window.Scrapper3000 = {
                 }
 
                 if (wolf.aiState === "MOVE") {
-                    const diff = wolf.currentTarget.subtract(wolf.position);
-                    if (diff.length() < 2) {
+                    wolf.currentTarget.subtractToRef(wolf.position, this.tempVector);
+                    if (this.tempVector.length() < 2) {
                         wolf.aiState = "WAIT";
                         wolf.aiWaitTimer = 5;
                     } else {
-                        const targetRotation = Math.atan2(diff.x, diff.z);
+                        const targetRotation = Math.atan2(this.tempVector.x, this.tempVector.z);
                         wolf.rotation.y += (targetRotation - wolf.rotation.y) * 0.05;
-                        const forward = new BABYLON.Vector3(Math.sin(wolf.rotation.y), 0, Math.cos(wolf.rotation.y));
-                        wolf.position.addInPlace(forward.scale(0.03));
+                        this.tempVector.set(Math.sin(wolf.rotation.y), 0, Math.cos(wolf.rotation.y));
+                        wolf.position.addInPlace(this.tempVector.scaleInPlace(0.03));
                         this.animateWolfWalk(wolf);
                     }
                 } else if (wolf.aiState === "WAIT") {
@@ -1434,6 +1840,10 @@ window.Scrapper3000 = {
                 hair.parent = anchor;
                 hair.position.y = -0.1;
                 hair.material = new BABYLON.StandardMaterial("hair_mat", this.scene);
+
+                // FIX: Disable Hair Collision
+                hair.checkCollisions = false;
+                hair.isPickable = false;
             }
             hair.material.diffuseColor = hColor;
             hair.scaling.y = 1 + length * 3;
@@ -1474,5 +1884,45 @@ window.Scrapper3000 = {
         this.scene.beginAnimation(plane, 0, frameRate * 2.5, false, 1, () => {
             plane.dispose();
         });
+    },
+
+    debugPhysics: function () {
+        console.log("=== Scrapper 3000 Physics Debug ===");
+        if (!this.player) {
+            console.log("No player found!");
+            return;
+        }
+
+        console.log("Player Position: " + this.player.position);
+        console.log("Ellipsoid: " + this.player.ellipsoid);
+        console.log("Ellipsoid Offset: " + this.player.ellipsoidOffset);
+        console.log("CheckCollisions (Root): " + this.player.checkCollisions);
+
+        // Check Limbs
+        console.log("-- Children & Collision State --");
+        this.player.getChildMeshes().forEach(m => {
+            if (m.checkCollisions) {
+                console.warn("COLLISION ACTIVE: " + m.name);
+            } else {
+                console.log("OK (No Collision): " + m.name);
+            }
+        });
+
+        // Check nearby environment
+        console.log("-- Nearby Environment (Potential Floor) --");
+        const nearby = this.scene.meshes.filter(m => {
+            return m !== this.player &&
+                !m.isDescendantOf(this.player) &&
+                m.checkCollisions &&
+                m.isEnabled() &&
+                m.isVisible &&
+                BABYLON.Vector3.Distance(this.player.position, m.getAbsolutePosition()) < 5.0;
+        });
+
+        nearby.forEach(m => {
+            console.log("Floor Candidate: " + m.name + " at " + m.getAbsolutePosition());
+        });
+
+        console.log("===================================");
     }
 };
