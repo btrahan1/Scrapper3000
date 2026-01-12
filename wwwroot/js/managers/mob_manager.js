@@ -9,6 +9,13 @@ class MobManager {
         this.wolves = [];
     }
 
+    dispose() {
+        this.clearMobs();
+        this.player = null; // Unlink player
+        this.scene = null;
+        console.log("MobManager disposed.");
+    }
+
     clearMobs() {
         this.rats.forEach(m => m.dispose());
         this.wolves.forEach(m => m.dispose());
@@ -189,55 +196,75 @@ class MobManager {
 
     async spawnRats() {
         console.log("MobManager: Releasing the rats...");
-        for (let i = 0; i < 5; i++) {
-            const rat = await this.assets.loadModel("data/models/ApocRat.json");
-            if (rat) {
-                // IMPORTANT: Override physics disable for mobs so `isPickable` works
-                this._enablePicking(rat);
+        const count = 20; // Increased population
+        const range = 120; // Wider area
 
-                rat.position = new BABYLON.Vector3(
-                    (Math.random() - 0.5) * 40,
-                    0,
-                    (Math.random() - 0.5) * 40 + 15
-                );
-                rat.rotation.y = Math.random() * Math.PI * 2;
-                rat.scaling.setAll(0.5);
+        for (let i = 0; i < count; i++) {
+            try {
+                const rat = await this.assets.loadModel("data/models/ApocRat.json");
+                if (rat) {
+                    this._enablePicking(rat);
 
-                rat.aiState = "PICK";
-                rat.aiWaitTimer = 0;
-                rat.biteCooldown = 0;
-                rat.animTimer = Math.random() * 10; // Random phase
-                this._cacheMobLimbs(rat, ["leg_BL_thigh", "leg_BR_thigh", "arm_FL", "arm_FR", "root_hips"]);
+                    rat.position = new BABYLON.Vector3(
+                        (Math.random() - 0.5) * range,
+                        0,
+                        (Math.random() - 0.5) * range + 20 // Slight offset forward
+                    );
+                    rat.rotation.y = Math.random() * Math.PI * 2;
+                    rat.scaling.setAll(0.5);
 
-                this.rats.push(rat);
+                    rat.aiState = "PICK";
+                    rat.aiWaitTimer = 0;
+                    rat.biteCooldown = 0;
+                    rat.animTimer = Math.random() * 10;
+                    this._cacheMobLimbs(rat, ["leg_BL_thigh", "leg_BR_thigh", "arm_FL", "arm_FR", "root_hips"]);
+
+                    this.rats.push(rat);
+                    // console.log("✅ Rat Spawned at " + rat.position);
+                } else {
+                    console.warn("⚠️ Failed to load Rat model.");
+                }
+            } catch (e) {
+                console.error("❌ Error spawning rat:", e);
             }
         }
+        console.log(`✅ MobManager: ${this.rats.length} Rats active.`);
     }
 
     async spawnWolves() {
         console.log("MobManager: The wolves are howling...");
-        for (let i = 0; i < 3; i++) {
-            const wolf = await this.assets.loadModel("data/models/BadlandsWolf.json");
-            if (wolf) {
-                this._enablePicking(wolf);
+        const count = 10; // Wolf pack
+        const range = 200; // Large territory
 
-                wolf.position = new BABYLON.Vector3(
-                    (Math.random() - 0.5) * 80,
-                    0,
-                    (Math.random() - 0.5) * 80 + 40
-                );
-                wolf.rotation.y = Math.random() * Math.PI * 2;
-                wolf.scaling.setAll(1.5);
+        for (let i = 0; i < count; i++) {
+            try {
+                const wolf = await this.assets.loadModel("data/models/BadlandsWolf.json");
+                if (wolf) {
+                    this._enablePicking(wolf);
 
-                wolf.aiState = "PICK";
-                wolf.biteCooldown = 0;
-                wolf.stats = { HP: 50, maxHP: 50 }; // Tougher
-                wolf.animTimer = Math.random() * 10;
-                this._cacheMobLimbs(wolf, ["leg_bl_hip", "leg_br_hip", "leg_fl_shoulder", "leg_fr_shoulder", "body_main"]);
+                    wolf.position = new BABYLON.Vector3(
+                        (Math.random() - 0.5) * range,
+                        0,
+                        (Math.random() - 0.5) * range + 40
+                    );
+                    wolf.rotation.y = Math.random() * Math.PI * 2;
+                    wolf.scaling.setAll(1.5);
 
-                this.wolves.push(wolf);
+                    wolf.aiState = "PICK";
+                    wolf.biteCooldown = 0;
+                    wolf.stats = { HP: 50, maxHP: 50 };
+                    wolf.animTimer = Math.random() * 10;
+                    this._cacheMobLimbs(wolf, ["leg_bl_hip", "leg_br_hip", "leg_fl_shoulder", "leg_fr_shoulder", "body_main"]);
+
+                    this.wolves.push(wolf);
+                } else {
+                    console.warn("⚠️ Failed to load Wolf model.");
+                }
+            } catch (e) {
+                console.error("❌ Error spawning wolf:", e);
             }
         }
+        console.log(`✅ MobManager: ${this.wolves.length} Wolves active.`);
     }
 
     _cacheMobLimbs(mob, keywords) {

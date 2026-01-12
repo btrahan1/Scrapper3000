@@ -7,7 +7,34 @@ class InputManager {
         this.leftJoystick = null;
         this.isWhackKeyDown = false;
 
+        // Store the bound functions so we can remove them later
+        this._mouseDownHandler = (e) => { if (e.button === 0) this.isWhackKeyDown = true; };
+        this._mouseUpHandler = (e) => { if (e.button === 0) this.isWhackKeyDown = false; };
+
         this.setupInputs();
+    }
+
+    dispose() {
+        console.log("InputManager disposed.");
+        if (this.leftJoystick) {
+            this.leftJoystick.releaseCanvas();
+            this.leftJoystick = null;
+        }
+        if (this.gui) {
+            this.gui.dispose();
+            this.gui = null;
+        }
+        if (this.scene && this.scene.actionManager) {
+            this.scene.actionManager.dispose();
+        }
+
+        window.removeEventListener("mousedown", this._mouseDownHandler);
+        window.removeEventListener("mouseup", this._mouseUpHandler);
+
+        this.keys = {};
+        this.inputMap = {};
+        this.scene = null;
+        this.canvas = null;
     }
 
     setupInputs() {
@@ -33,12 +60,8 @@ class InputManager {
         }));
 
         // Mouse Whack
-        window.addEventListener("mousedown", (e) => {
-            if (e.button === 0) this.isWhackKeyDown = true;
-        });
-        window.addEventListener("mouseup", (e) => {
-            if (e.button === 0) this.isWhackKeyDown = false;
-        });
+        window.addEventListener("mousedown", this._mouseDownHandler);
+        window.addEventListener("mouseup", this._mouseUpHandler);
 
         // Touch / Joystick
         const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;

@@ -45,6 +45,12 @@
         </div>
     }
 
+    <!-- Transition Curtain -->
+    <div class="transition-curtain @(_isTransitioning ? "" : "hidden")">
+        <div class="loader"></div>
+        <p>ENTERING THE WASTELAND...</p>
+    </div>
+
     @if (State.IsLandingPage)
     {
         <div class="landing-page">
@@ -345,6 +351,7 @@
     private string _storageMode = "local";
     private CancellationTokenSource? _saveCts;
     private bool _showPaperDoll = false;
+    private bool _isTransitioning = false;
 
     private void TogglePaperDoll()
     {
@@ -362,8 +369,19 @@
 
     private async Task ContinueJourney()
     {
+        // 1. Drop the Curtain
+        _isTransitioning = true;
+        StateHasChanged();
+        await Task.Delay(100); // Allow render
+
+        // 2. Trigger Hard Reset
         State.ContinueGame();
         await JSRuntime.InvokeVoidAsync("Scrapper3000.jumpToJunkyard", State.Gender, State.HairLength, State.HairColor);
+
+        // 3. Lift Curtain (after delay for scene rebuild)
+        await Task.Delay(2000); 
+        _isTransitioning = false;
+        StateHasChanged();
     }
 
     private async Task PrepareSlotSelection()
@@ -648,10 +666,20 @@
     private async Task FinishCustomization()
     {
         State.CompleteCustomization();
-        await InvokeAsync(StateHasChanged); 
         
-        await JSRuntime.InvokeVoidAsync("Scrapper3000.exitShed");
+        // 1. Drop the Curtain
+        _isTransitioning = true;
+        StateHasChanged();
+        await Task.Delay(100);
+
+        // 2. Trigger Hard Reset (Standardized Path)
+        await JSRuntime.InvokeVoidAsync("Scrapper3000.jumpToJunkyard", State.Gender, State.HairLength, State.HairColor);
         State.SetDialogue("Now, get on out there and start collecting some scrap!");
+
+        // 3. Lift Curtain
+        await Task.Delay(2000);
+        _isTransitioning = false;
+        StateHasChanged();
     }
 
     private async Task OnStorageModeChange(ChangeEventArgs e)
@@ -787,6 +815,36 @@
         text-align: center;
         border-bottom: 2px solid #444;
         letter-spacing: 1px;
+    }
+
+    /* THE CURTAIN (Hard Reset Transition) 🎭 */
+    .transition-curtain {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #00ff66;
+        font-family: 'Courier New', monospace;
+        transition: opacity 1.5s ease-in-out, visibility 1.5s;
+    }
+    
+    .transition-curtain.hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    .transition-curtain p {
+        margin-top: 20px;
+        font-size: 1.2rem;
+        animation: pulse 1s infinite alternate;
     }
 
     .backpack-list {

@@ -36,6 +36,27 @@ class PlayerController {
         this.baseSkinColor = "#bd9a7a"; // Default skin
     }
 
+    dispose() {
+        // Kill Mesh
+        if (this.mesh) {
+            this.mesh.dispose();
+            this.mesh = null;
+        }
+
+        // Kill Camera
+        if (this.camera) {
+            this.camera.dispose();
+            this.camera = null;
+        }
+
+        // Reset State
+        this.playerLimbs = {};
+        this.currentArmorParts = [];
+        this.currentWeaponMesh = null;
+
+        console.log("PlayerController disposed.");
+    }
+
     setupThirdPersonCamera() {
         if (this.camera) this.camera.dispose();
 

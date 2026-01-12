@@ -58,12 +58,147 @@ window.Scrapper3000 = {
         this.engine.resize(); // Initial fit
 
         // Setup initial scene (Shed)
-        this.resetToShed();
+        // this.resetToShed(); // REPLACED by direct init logic or new structure
+        this.setupEnvironment();
+        this.buildShed();
 
         // 4. Global Event Listeners
         window.addEventListener("playerHit", (e) => {
             if (this.mobs) this.mobs.notifyPlayerHit(e.detail);
         });
+    },
+
+    // --- THE NUCLEAR OPTION ☢️ ---
+    disposeScene: function () {
+        console.log("⚠️ DISPOSING SCENE...");
+        this.engine.stopRenderLoop();
+
+        // 1. Dispose Managers
+        if (this.player) this.player.dispose();
+        if (this.mobs) this.mobs.dispose();
+        if (this.input) this.input.dispose();
+
+        this.player = null;
+        this.mobs = null;
+        this.bot = null;
+        this.input = null;
+        this.assets = null;
+
+        // 2. Dispose Babylon
+        if (this.scene) {
+            this.scene.dispose();
+            this.scene = null;
+        }
+        if (this.engine) {
+            this.engine.dispose();
+            this.engine = null;
+        }
+
+        console.log("✅ Scene Disposed. Memory cleared.");
+    },
+
+    initJunkyardScene: async function (gender, hairLength, hairColor) {
+        console.log("🌵 Initializing JUNKYARD Scene...");
+
+        // 1. Re-Init Engine & Scene
+        this.canvas = document.getElementById("renderCanvas");
+        this.engine = new BABYLON.Engine(this.canvas, true);
+        this.scene = new BABYLON.Scene(this.engine);
+
+        // 2. Re-Init Managers
+        this.assets = new AssetManager(this.scene);
+        this.input = new InputManager(this.scene, this.canvas); // Attaches new listeners
+        this.player = new PlayerController(this.scene, this.assets, this.dotNetHelper);
+        this.mobs = new MobManager(this.scene, this.assets, this.player, this.dotNetHelper);
+        this.bot = new BotManager(this.scene, this.assets, this.player, this.mobs, this.dotNetHelper);
+
+        // 3. Setup Wasteland Environment
+        var sun = new BABYLON.HemisphericLight("sun", new BABYLON.Vector3(0, 1, 0), this.scene);
+        sun.intensity = 1.0;
+        var hemi = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(0, -1, 0), this.scene);
+        hemi.intensity = 0.3;
+        hemi.diffuse = new BABYLON.Color3(0.5, 0.5, 0.6);
+        this.scene.clearColor = new BABYLON.Color4(0.6, 0.45, 0.3, 1.0); // Sky color
+
+        // 4. Build World
+        const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 400, height: 400 }, this.scene);
+        const groundMat = new BABYLON.StandardMaterial("groundMat", this.scene);
+        groundMat.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/textures/grass.jpg", this.scene);
+        groundMat.diffuseTexture.uScale = 60;
+        groundMat.diffuseTexture.vScale = 60;
+        ground.material = groundMat;
+        ground.checkCollisions = true;
+
+        // Skybox
+        const sky = BABYLON.MeshBuilder.CreateSphere("sky", { diameter: 300, segments: 16 }, this.scene);
+        const skyMat = new BABYLON.StandardMaterial("skyMat", this.scene);
+        skyMat.backFaceCulling = false;
+        skyMat.diffuseColor = new BABYLON.Color3(0.6, 0.45, 0.3);
+        sky.material = skyMat;
+        sky.infiniteDistance = true;
+
+        // Props (Shop/Tent/Scrap)
+        this.spawnJunkyardProps();
+
+        // 5. Spawn Player & Camera
+        await this.player.updateAvatar(gender, hairLength, hairColor);
+        // Force Gear Sync immediately
+        await this.player.updateGear();
+
+        this.player.setupThirdPersonCamera(); // Explicitly set camera
+
+        // 6. Start Loop
+        this.initRenderLoop();
+
+        // 7. Spawn Mobs
+        this.mobs.spawnRats();
+        this.mobs.spawnWolves();
+
+        console.log("✅ Junkyard Initialized.");
+    },
+
+    spawnJunkyardProps: function () {
+        // Sam's Kiosk
+        this.assets.loadModel("data/models/SamKiosk.json").then(kiosk => {
+            if (kiosk) {
+                kiosk.position = new BABYLON.Vector3(-10, 0, 20);
+                kiosk.rotation.y = Math.PI / 4;
+                kiosk.getChildMeshes().forEach(m => {
+                    m.isPickable = true;
+                    m.actionManager = new BABYLON.ActionManager(this.scene);
+                    m.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
+                        this.dotNetHelper.invokeMethodAsync('OpenShop');
+                    }));
+                });
+            }
+        });
+
+        // Medic Tent
+        this.assets.loadModel("data/models/MedicTent.json").then(tent => {
+            if (tent) {
+                tent.position = new BABYLON.Vector3(10, 0, 20);
+                tent.rotation.y = -Math.PI / 4;
+                tent.getChildMeshes().forEach(m => {
+                    m.isPickable = true;
+                    m.actionManager = new BABYLON.ActionManager(this.scene);
+                    m.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
+                        this.dotNetHelper.invokeMethodAsync('HealPlayer');
+                    }));
+                });
+            }
+        });
+
+        // Scrap Piles
+        for (let i = 0; i < 20; i++) {
+            const x = (Math.random() - 0.5) * 60;
+            const z = (Math.random() - 0.5) * 60 + 60;
+            this.assets.loadModel("data/models/ScrapPile.json").then(pile => {
+                if (pile) {
+                    pile.position = new BABYLON.Vector3(x, 0, z);
+                    this.mobs._enablePicking(pile); // Make smashable
+                }
+            });
+        }
     },
 
     setupEnvironment: function () {
@@ -194,35 +329,17 @@ window.Scrapper3000 = {
 
     // BRIDGE: Called by C# logic to start game
     jumpToJunkyard: async function (gender, hairLength, hairColor) {
-        console.log("Scrapper 3000: Jumping to Junkyard...");
+        console.log("Scrapper 3000: Jumping to Junkyard (HARD RESET)...");
 
-        try {
-            // 1. Expand World
-            this.spawnJunkyard();
+        // 1. Show Curtain (Managed by Blazor/CSS, but we can trigger a delay here)
+        // 2. NUKE THE OLD SCENE
+        this.disposeScene();
 
-            // 2. Spawn Player
-            await this.player.updateAvatar(gender, hairLength, hairColor);
-
-            // 3. Force Initial Gear Sync
-            await this.player.updateGear();
-
-            // 4. Spawn Mobs
-            try {
-                this.mobs.spawnRats();
-                this.mobs.spawnWolves();
-            } catch (mobErr) {
-                console.error("Mob spawn error (continuing):", mobErr);
-            }
-
-        } catch (e) {
-            console.error("CRITICAL ERROR in jumpToJunkyard:", e);
-        } finally {
-            // ALWAYS ensure camera is switched and player is visible
-            if (this.player) {
-                if (this.player.mesh) this.player.mesh.setEnabled(true);
-                this.player.setupThirdPersonCamera();
-            }
-        }
+        // 3. REBUILD THE NEW SCENE
+        // Give the DOM a moment to breathe
+        setTimeout(() => {
+            this.initJunkyardScene(gender, hairLength, hairColor);
+        }, 100);
     },
 
     resetToShed: function () {
