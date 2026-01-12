@@ -126,10 +126,10 @@ window.Scrapper3000 = {
         // 2. Spawn Player (handles camera too)
         await this.player.updateAvatar(gender, hairLength, hairColor);
 
-        // 2.5 Force Gear Load (Standard Start)
-        await this.player.updateGear("Rusty Stick", "None");
+        // 3. Force Initial Gear Sync (Metadata is already in C# state)
+        await this.player.updateGear();
 
-        // 3. Spawn Mobs
+        // 4. Spawn Mobs
         this.mobs.spawnRats();
         this.mobs.spawnWolves();
     },
@@ -210,8 +210,8 @@ window.Scrapper3000 = {
     },
 
     // BRIDGE: C# Interop Delegations
-    updateGear: function (weapon, armor) {
-        if (this.player) this.player.updateGear(weapon, armor);
+    updateGear: async function () {
+        if (this.player) await this.player.updateGear();
     },
 
     updateAvatar: function (gender, hairLength, hairColor) {

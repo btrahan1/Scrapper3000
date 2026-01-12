@@ -135,8 +135,23 @@
                 </div>
             </div>
             <div class="hud-item gear-card">
-                <div class="gear-slot">⚔️ @State.EquippedWeapon</div>
-                <div class="gear-slot">🛡️ @State.EquippedArmor</div>
+                <div class="gear-header">⚔️ EQUIPPED GEAR</div>
+                @foreach (var slot in State.EquippedSlots)
+                {
+                    var icon = slot.Key switch {
+                        "Weapon" => "🗡️",
+                        "Head" => "🪖",
+                        "Chest" => "🦺",
+                        "Legs" => "👖",
+                        "Feet" => "👢",
+                        "Arms" => "🦾",
+                        "Gloves" => "🧤",
+                        _ => "📦"
+                    };
+                    <div class="gear-slot equipped">@icon @slot.Key: @slot.Value</div>
+                }
+                
+                <button class="paper-doll-btn" @onclick="TogglePaperDoll">🎭 PAPER DOLL</button>
             </div>
             <div class="hud-item dialogue-hud">@State.DialogueText</div>
         </div>
@@ -146,13 +161,9 @@
             <div class="backpack-list">
                 @foreach (var item in State.Inventory.Where(i => i.Value > 0))
                 {
-                    <div class="backpack-item @(State.EquippedWeapon == item.Key || State.EquippedArmor == item.Key ? "equipped" : "")">
+                    <div class="backpack-item">
                         <span class="item-name">@item.Key</span>
-                        <span class="item-count"> x @(item.Value)</span>
-                        @if (State.EquippedWeapon == item.Key || State.EquippedArmor == item.Key)
-                        {
-                            <span class="equipped-tag">E</span>
-                        }
+                        <span class="item-count">x @(item.Value)</span>
                     </div>
                 }
                 @if (!State.Inventory.Values.Any(v => v > 0))
@@ -193,10 +204,10 @@
                     }
                     else
                     {
-                        @foreach (var item in State.AvailableGear)
+                        @foreach (var item in State.AvailableGear.Where(g => g.Price > 0))
                         {
                             bool owned = State.OwnedGear.Contains(item.Name);
-                            bool equipped = State.EquippedWeapon == item.Name || State.EquippedArmor == item.Name;
+                            bool equipped = State.EquippedSlots.Values.Contains(item.Name);
                             <div class="shop-row @(owned ? "owned" : "")">
                                 <span class="item-name">@item.Name <br/><small>@item.Description</small></span>
                                 <span class="item-price">💰 @item.Price</span>
@@ -231,6 +242,59 @@
             </div>
         </div>
     }
+
+    @if (_showPaperDoll)
+    {
+        <div class="paper-doll-overlay" @onclick="TogglePaperDoll">
+            <div class="paper-doll-modal" @onclick:stopPropagation="true">
+                <div class="paper-doll-header">
+                    <h2>🎭 EQUIPMENT MANAGER</h2>
+                    <button class="close-btn" @onclick="TogglePaperDoll">✖</button>
+                </div>
+                
+                <div class="paper-doll-stats">
+                    <div class="stat-display">⚔️ ATK: @State.AttackPower</div>
+                    <div class="stat-display">🛡️ DEF: @State.Defense</div>
+                </div>
+
+                <div class="paper-doll-grid">
+                    @foreach (var slot in State.EquippedSlots.Keys)
+                    {
+                        var equipped = State.EquippedSlots[slot];
+                        var icon = slot switch {
+                            "Weapon" => "🗡️",
+                            "Head" => "🪖",
+                            "Chest" => "🦺",
+                            "Legs" => "👖",
+                            "Feet" => "👢",
+                            "Arms" => "🦾",
+                            "Gloves" => "🧤",
+                            _ => "📦"
+                        };
+                        
+                        <div class="equipment-slot">
+                            <div class="slot-label">@icon @slot</div>
+                            <select class="slot-dropdown" value="@equipped" @onchange="@(e => EquipFromDropdown(slot, e.Value?.ToString() ?? "None"))">
+                                <option value="None">-- Empty --</option>
+                                @foreach (var item in State.OwnedGear)
+                                {
+                                    var gearItem = State.AvailableGear.Find(g => g.Name == item);
+                                    if (gearItem != null && gearItem.Slot == slot)
+                                    {
+                                        <option value="@item">@item (+@gearItem.Value)</option>
+                                    }
+                                }
+                            </select>
+                            @if (equipped != "None")
+                            {
+                                <button class="unequip-btn" @onclick="() => State.UnequipSlot(slot)">🗑️</button>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -239,6 +303,21 @@
     private string _shopTab = "sell";
     private string _storageMode = "local";
     private CancellationTokenSource? _saveCts;
+    private bool _showPaperDoll = false;
+
+    private void TogglePaperDoll()
+    {
+        _showPaperDoll = !_showPaperDoll;
+        Console.WriteLine($"Paper Doll toggled: {_showPaperDoll}");
+    }
+
+    private void EquipFromDropdown(string slot, string itemName)
+    {
+        if (itemName == "None")
+            State.UnequipSlot(slot);
+        else
+            State.EquipItem(itemName, slot);
+    }
 
     private async Task ContinueJourney()
     {
@@ -261,12 +340,25 @@
             
             // Initial Sync
             await JSRuntime.InvokeVoidAsync("Scrapper3000.updateStats", State.AttackPower, State.Defense);
-            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateGear", State.EquippedWeapon, State.EquippedArmor);
+            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateGear");
 
             State.OnStateChanged += HandleSaveTrigger; 
+            State.OnEquipmentChanged += HandleEquipmentUpdate;
             State.OnVisualUpdate += HandleVisualUpdate;
             State.OnRespawnTriggered += HandleRespawn;
             State.OnPlayerDied += HandleDeath;
+        }
+    }
+
+    private async void HandleEquipmentUpdate()
+    {
+        try {
+            await InvokeAsync(async () => 
+            {
+                await JSRuntime.InvokeVoidAsync("Scrapper3000.updateGear");
+            });
+        } catch (Exception ex) {
+            Console.WriteLine("[RAZOR] Equipment Update Error: " + ex.Message);
         }
     }
 
@@ -298,7 +390,7 @@
         {
             StateHasChanged();
             await JSRuntime.InvokeVoidAsync("Scrapper3000.updateStats", State.AttackPower, State.Defense);
-            await JSRuntime.InvokeVoidAsync("Scrapper3000.updateGear", State.EquippedWeapon, State.EquippedArmor);
+            // updateGear is called by HandleSaveTrigger when equipment actually changes
             await JSRuntime.InvokeVoidAsync("Scrapper3000.setPaused", State.IsPaused);
         });
     }
@@ -306,33 +398,40 @@
     // Queues the Cloud/Local Save (Expensive/Debounced)
     private async void HandleSaveTrigger()
     {
-        await InvokeAsync(async () => 
-        {
-            // Debounce Logic
+        try {
+            // Debounce logic MUST stay on UI thread for JSRuntime safety
             _saveCts?.Cancel();
             _saveCts = new CancellationTokenSource();
             var token = _saveCts.Token;
+
+            // Wait on the UI thread dispatcher
+            await Task.Delay(_storageMode == "firebase" ? 30000 : 2000, token);
             
-            _ = Task.Run(async () => {
-                try {
-                    // 30 second delay for Cloud, 2 seconds for Local
-                    int delay = _storageMode == "firebase" ? 30000 : 2000;
-                    await Task.Delay(delay, token);
-                    
-                    if (!token.IsCancellationRequested) {
-                        try 
-                        {
-                            await JSRuntime.InvokeVoidAsync("StorageBridge.savePlayerState", State.GetSerializedState());
-                            Console.WriteLine($"[RAZOR] State Saved ({_storageMode}).");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine("[RAZOR] Save Error: " + ex.Message);
-                        }
+            if (!token.IsCancellationRequested) {
+                await InvokeAsync(async () => {
+                    try 
+                    {
+                        var json = State.GetSerializedState();
+                        await JSRuntime.InvokeVoidAsync("StorageBridge.savePlayerState", json);
+                        Console.WriteLine($"[RAZOR] State Saved ({_storageMode}) at {DateTime.Now:HH:mm:ss}.");
                     }
-                } catch (TaskCanceledException) {}
-            });
-        });
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("[RAZOR] Save Execution Error: " + ex.Message);
+                    }
+                });
+            }
+        } catch (TaskCanceledException) {
+            // Normal behavior for debouncing
+        } catch (Exception ex) {
+            Console.WriteLine("[RAZOR] Save Trigger Error: " + ex.Message);
+        }
+    }
+
+    [JSInvokable]
+    public string GetEquippedItemsMetadata()
+    {
+        return State.GetEquippedItemsMetadata();
     }
 
     private void HandleGlobalKeydown(KeyboardEventArgs e)
@@ -779,15 +878,173 @@
     .gear-card {
         display: flex;
         flex-direction: column;
-        gap: 5px;
+        gap: 3px;
         background: rgba(40, 40, 60, 0.4) !important;
         border: 1px solid #00ff6633;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .gear-header {
+        font-size: 0.7rem;
+        color: #00ff66;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 3px 0;
+        border-bottom: 1px solid #00ff6633;
+    }
+
+    .gear-header-small {
+        font-size: 0.65rem;
+        color: #888;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 2px 0;
+    }
+
+    .gear-divider {
+        height: 1px;
+        background: #444;
+        margin: 3px 0;
     }
 
     .gear-slot {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         color: #ddd;
         font-family: 'Courier New', monospace;
+    }
+
+    .paper-doll-btn {
+        margin-top: 8px;
+        padding: 8px;
+        background: linear-gradient(135deg, #00ff66, #00cc55);
+        color: #000;
+        border: none;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        pointer-events: auto;
+        position: relative;
+        z-index: 100;
+    }
+
+    .paper-doll-btn:hover {
+        background: linear-gradient(135deg, #00ff88, #00dd66);
+        transform: scale(1.05);
+    }
+
+    /* Paper Doll Modal */
+    .paper-doll-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    }
+
+    .paper-doll-modal {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border: 2px solid #00ff66;
+        border-radius: 12px;
+        padding: 20px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .paper-doll-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #00ff66;
+        padding-bottom: 10px;
+    }
+
+    .paper-doll-header h2 {
+        color: #00ff66;
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .close-btn {
+        background: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        font-size: 1.2rem;
+    }
+
+    .paper-doll-stats {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-bottom: 20px;
+        padding: 10px;
+        background: rgba(0, 255, 102, 0.1);
+        border-radius: 8px;
+    }
+
+    .stat-display {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #00ff66;
+    }
+
+    .paper-doll-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .equipment-slot {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid #00ff6633;
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .slot-label {
+        font-size: 0.9rem;
+        color: #00ff66;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .slot-dropdown {
+        width: 100%;
+        padding: 8px;
+        background: #0a0a0a;
+        color: #fff;
+        border: 1px solid #00ff66;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        margin-bottom: 5px;
+    }
+
+    .unequip-btn {
+        width: 100%;
+        padding: 5px;
+        background: #ff4444;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    .unequip-btn:hover {
+        background: #ff6666;
     }
 
     .naming-box button {

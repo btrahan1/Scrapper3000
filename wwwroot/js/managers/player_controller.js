@@ -5,27 +5,35 @@ class PlayerController {
         this.dotNetHelper = dotNetHelper;
         this.mesh = null;
         this.playerLimbs = {};
+        this.limbGroups = {
+            Head: [],
+            Chest: [],
+            Arms: [],
+            Gloves: [],
+            Legs: [],
+            Feet: []
+        };
         this.currentWeaponMesh = null;
         this.currentArmorParts = [];
-        this.lastEquippedWeapon = "";
-        this.lastEquippedArmor = "";
 
         // Stats
         this.isPlayerDead = false;
         this.isAttacking = false;
         this.attackCooldown = 0.0;
-        this.walkSpeed = 0.10; // DOUBLED 🏃‍♀️💨
+        this.walkSpeed = 0.10;
         this.runSpeed = 0.20;
-        this.attackPower = 10; // Default ATK
-        this.defense = 0; // Default DEF
+        this.attackPower = 10;
+        this.defense = 0;
 
         // Animation State
-        this.initialTorsoY = 0; // Dynamic baseline
+        this.initialTorsoY = 0;
         this.bobCycle = 0;
 
         // Camera Management
         this.camera = null;
         this.isFirstPerson = false;
+
+        this.baseSkinColor = "#bd9a7a"; // Default skin
     }
 
     setupThirdPersonCamera() {
@@ -115,8 +123,8 @@ class PlayerController {
 
         // 3. Setup Physics & Camera Target
         this.mesh.checkCollisions = true;
-        this.mesh.ellipsoid = new BABYLON.Vector3(0.3, 0.9, 0.3);
-        this.mesh.ellipsoidOffset = new BABYLON.Vector3(0, 0.9, 0);
+        this.mesh.ellipsoid = new BABYLON.Vector3(0.3, 1.0, 0.3); // Standardized 2m height collider
+        this.mesh.ellipsoidOffset = new BABYLON.Vector3(0, 0.8, 0); // Precise offset to clear -0.20m model sole depth
         this.mesh.position = new BABYLON.Vector3(0, 2.0, 15); // Drop in spawn
 
         // 3.5 Re-setup camera target if it exists
@@ -126,17 +134,30 @@ class PlayerController {
             this.camera.parent = this.mesh;
         }
 
-        // 4. Cache Limbs & Hair
+        // 4. Cache Limbs, Hair & Face
         this.cachePlayerLimbs();
         this.updateHairOnMesh(hairLength, hairColor);
+        this.updateFaceOnMesh();
 
         // 5. Attach Backpack (Standard Gear)
         const backpack = await this.assets.loadModel("data/models/Backpack.json");
         if (backpack) {
             this._disableCollisions(backpack); // Prevent self-collision
-            if (this.playerLimbs.torso) {
-                backpack.parent = this.playerLimbs.torso;
-                backpack.position = new BABYLON.Vector3(0, 0, -0.15); // Offset on back
+            // Parent to chest for correct height and bobbing
+            // Parent to torso/spine for a lower, more natural position on the back
+            const backAnchor = this.playerLimbs.torso || this.playerLimbs.chest;
+            if (backAnchor) {
+                backpack.parent = backAnchor;
+                backpack.position = new BABYLON.Vector3(0, 0.1, -0.15); // Sit on lower back/spine
+                backpack.scaling.setAll(0.5); // Keep the compact scale
+
+                // Give it a "rough/matte" look (no specular)
+                backpack.getChildMeshes().forEach(m => {
+                    if (m.material) {
+                        m.material.specularColor = new BABYLON.Color3(0, 0, 0);
+                        m.material.roughness = 1.0;
+                    }
+                });
             } else {
                 backpack.parent = this.mesh;
                 backpack.position = new BABYLON.Vector3(0, 1.2, -0.2);
@@ -184,30 +205,33 @@ class PlayerController {
         if (!this.playerLimbs.armL) return; // Limbs not ready
 
         if (isWalking) {
-            const time = performance.now() * 0.005;
-            this.bobCycle += 0.1;
+            const time = performance.now() * 0.008; // Slightly faster rhythm
 
-            // Limbs Swing
-            this.playerLimbs.armL.rotation.x = Math.sin(time) * 0.5;
-            this.playerLimbs.armR.rotation.x = -Math.sin(time) * 0.5;
-            this.playerLimbs.legL.rotation.x = -Math.sin(time) * 0.5;
-            this.playerLimbs.legR.rotation.x = Math.sin(time) * 0.5;
+            // 1. Limbs Swing (Opposing movement)
+            const swing = Math.sin(time);
+            this.playerLimbs.armL.rotation.x = swing * 0.5;
+            this.playerLimbs.armR.rotation.x = -swing * 0.5;
+            this.playerLimbs.legL.rotation.x = -swing * 0.6; // Slightly more leg lift
+            this.playerLimbs.legR.rotation.x = swing * 0.6;
 
-            // Head Bob
-            if (this.playerLimbs.head) {
-                this.playerLimbs.head.rotation.y = Math.sin(time * 2) * 0.05;
-                this.playerLimbs.head.rotation.z = Math.cos(time) * 0.02;
+            // 2. Double-Bounce Bob
+            // Math.abs gives us a peak for every footfall (2 per full limb cycle)
+            const bob = Math.abs(swing) * 0.04;
+            if (this.playerLimbs.torso) {
+                this.playerLimbs.torso.position.y = this.initialTorsoY + bob;
+                // 3. Torso Sway (Weight transfer side-to-side)
+                this.playerLimbs.torso.rotation.z = swing * 0.04;
             }
 
-            // Torso Bob (Vertical)
-            if (this.playerLimbs.torso) {
-                // Use cached baseline 
-                this.playerLimbs.torso.position.y = this.initialTorsoY + Math.sin(this.bobCycle) * 0.02;
+            // 4. Head Rhythm
+            if (this.playerLimbs.head) {
+                this.playerLimbs.head.rotation.y = swing * 0.05;
+                this.playerLimbs.head.rotation.z = -swing * 0.02; // Counter-sway
             }
 
         } else {
-            // Reset Pose
-            const lerp = 0.1;
+            // Reset to Idle Pose
+            const lerp = 0.15; // Snappier return
             this.playerLimbs.armL.rotation.x = BABYLON.Scalar.Lerp(this.playerLimbs.armL.rotation.x, 0, lerp);
             this.playerLimbs.armR.rotation.x = BABYLON.Scalar.Lerp(this.playerLimbs.armR.rotation.x, 0, lerp);
             this.playerLimbs.legL.rotation.x = BABYLON.Scalar.Lerp(this.playerLimbs.legL.rotation.x, 0, lerp);
@@ -215,6 +239,11 @@ class PlayerController {
 
             if (this.playerLimbs.torso) {
                 this.playerLimbs.torso.position.y = BABYLON.Scalar.Lerp(this.playerLimbs.torso.position.y, this.initialTorsoY, lerp);
+                this.playerLimbs.torso.rotation.z = BABYLON.Scalar.Lerp(this.playerLimbs.torso.rotation.z, 0, lerp);
+            }
+            if (this.playerLimbs.head) {
+                this.playerLimbs.head.rotation.y = BABYLON.Scalar.Lerp(this.playerLimbs.head.rotation.y, 0, lerp);
+                this.playerLimbs.head.rotation.z = BABYLON.Scalar.Lerp(this.playerLimbs.head.rotation.z, 0, lerp);
             }
         }
     }
@@ -296,167 +325,225 @@ class PlayerController {
         // var particleSystem = new BABYLON.ParticleSystem("sparks", 20, this.scene);
     }
 
-    async updateGear(weaponName, armorName) {
-        if (!this.mesh || !this.playerLimbs.armR) return;
-        if (this.lastEquippedWeapon === weaponName && this.lastEquippedArmor === armorName) return;
+    async updateGear() {
+        if (!this.mesh || !this.dotNetHelper) return;
 
-        this.lastEquippedWeapon = weaponName;
-        this.lastEquippedArmor = armorName;
-        console.log(`PlayerController: Equipping ${weaponName} / ${armorName}`);
+        try {
+            // 1. Fetch full gear metadata from C#
+            let equipment = await this.dotNetHelper.invokeMethodAsync("GetEquippedItemsMetadata");
+            if (!equipment) return;
 
-        // 1. Weapon Swap
-        if (this.currentWeaponMesh) {
-            this.currentWeaponMesh.dispose();
-            this.currentWeaponMesh = null;
-        }
+            // Parse if it's a JSON string
+            if (typeof equipment === 'string') {
+                try {
+                    equipment = JSON.parse(equipment);
+                } catch (e) {
+                    console.error("❌ Failed to parse equipment metadata:", e);
+                    return;
+                }
+            }
 
-        let cleanName = weaponName.replace(/\s/g, "");
-        let weaponPath = `data/models/${cleanName}.json`;
-        let weapon = await this.assets.loadModel(weaponPath);
+            console.log("🎭 Updating Hybrid Equipment:", equipment);
 
-        // Fallback
-        if (!weapon) weapon = await this.assets.loadModel("data/models/Stick.json");
-
-        if (weapon) {
-            this._disableCollisions(weapon);
-            weapon.parent = this.playerLimbs.armR;
-            weapon.position = new BABYLON.Vector3(0, -0.4, 0.1);
-            weapon.rotation.x = Math.PI / 2;
-            weapon.rotation.z = Math.PI / 4;
-            this.currentWeaponMesh = weapon;
-        }
-
-        // 2. Armor Logic
-        if (this.currentArmorParts) {
+            // 2. Clear ONLY 3D attachment models 
             this.currentArmorParts.forEach(p => p.dispose());
             this.currentArmorParts = [];
-        }
+            if (this.currentWeaponMesh) {
+                this.currentWeaponMesh.dispose();
+                this.currentWeaponMesh = null;
+            }
 
-        // (Simplified for brevity - moving the massive if/else block)
-        // Note: I am copying the exact logic from previous engine, including all the Overalls/Helmet/Boots cases
-        // ... [Insert giant armor switch block here] ... 
-        // For the sake of the tool limit, I will implement a smarter generic attachments system or just copy the big block.
-        // Let's implement a helper "attachArmor" to keep this file clean.
+            // 3. Process each slot
+            for (const slot in equipment) {
+                const item = equipment[slot];
+                const itemName = item.name || item.Name;
+                const useModel = item.useModel || item.UseModel;
+                const colorHex = item.colorHex || item.ColorHex;
 
-        await this.loadArmorPiece(armorName, "Overalls", ["hips", "torso", "left_leg", "right_leg"]);
-        await this.loadArmorPiece(armorName, "Helmet", null, this.playerLimbs.head);
-        await this.loadArmorPiece(armorName, "Boots", ["Left", "Right"]);
-        await this.loadArmorPiece(armorName, "Vest", null, this.playerLimbs.torso);
-        await this.loadArmorPiece(armorName, "Gloves", ["L_Wrist_Cuff", "R_Wrist_Cuff"]);
-        await this.loadArmorPiece(armorName, "Leggings", ["waist_band", "leg_upper_left", "leg_upper_right"]);
-        await this.loadArmorPiece(armorName, "Sleeves", ["L_Shoulder_Cap", "R_Shoulder_Cap"]);
-    }
-
-    // Smart Armor Loader to replace 200 lines of if/else
-    async loadArmorPiece(currentArmorName, type, partsToFind, directParent = null) {
-        if (!currentArmorName.includes(type)) return;
-
-        const cleanName = currentArmorName.replace(/\s/g, ""); // e.g. "BasicOveralls" (Wait, the inputs are full names like "Basic Overalls")
-        // Actually the inputs are usually "Basic Overalls". 
-        // The old code did: if (armorName.includes("Overalls")) load(armorName.json)?? No, usually specific logic.
-        // Let's stick to the pattern: Name "Basic Overalls" -> File "BasicOveralls.json"
-
-        const modelName = currentArmorName.replace(/\s/g, "");
-        const mesh = await this.assets.loadModel(`data/models/${modelName}.json`);
-
-        if (!mesh) return;
-        this._disableCollisions(mesh);
-
-        if (directParent) {
-            // Simple attachment (Helmet, Vest)
-            mesh.parent = directParent;
-            this.currentArmorParts.push(mesh);
-        } else if (partsToFind) {
-            // Complex skinned attachment (Gloves, Boots, Overalls)
-            const children = mesh.getChildMeshes();
-
-            // Map common parts to limbs
-            // This is a heuristics map based on previous hardcoded logic
-            partsToFind.forEach(partKey => {
-                const foundPart = children.find(m => m.name.toLowerCase().includes(partKey.toLowerCase()));
-                if (!foundPart) return;
-
-                let targetLimb = null;
-                // Logic to map part -> player limb
-                if (partKey.includes("hips") || partKey.includes("waist")) targetLimb = this.playerLimbs.torso;
-                else if (partKey.includes("torso")) targetLimb = this.playerLimbs.torso; // Some vests are parts
-                else if (partKey.includes("left_leg") || partKey.includes("leg_upper_left") || partKey.includes("Left")) targetLimb = this.playerLimbs.legL;
-                else if (partKey.includes("right_leg") || partKey.includes("leg_upper_right") || partKey.includes("Right")) targetLimb = this.playerLimbs.legR;
-                else if (partKey.includes("L_Wrist") || partKey.includes("L_Shoulder")) targetLimb = this.playerLimbs.armL;
-                else if (partKey.includes("R_Wrist") || partKey.includes("R_Shoulder")) targetLimb = this.playerLimbs.armR;
-
-                if (targetLimb) {
-                    foundPart.setParent(targetLimb);
-                    foundPart.position = new BABYLON.Vector3(0, 0, 0); // Reset local
-                    // Tweaks from old code:
-                    if (type === "Overalls" && partKey.includes("hips")) foundPart.position.y = -0.4;
-                    if (type === "Boots") foundPart.position.y = -0.45;
-                    if (type === "Gloves") foundPart.position.y = -0.35;
-                    if (type === "Leggings" && partKey.includes("waist")) foundPart.position.y = -0.4;
-                    if (type === "Leggings" && partKey.includes("leg")) foundPart.position.y = -0.4;
-
-                    foundPart.rotation = new BABYLON.Vector3(0, 0, 0);
-                    this.currentArmorParts.push(foundPart);
+                if (itemName === "None" || !itemName) {
+                    // Reset limb colors to skin for soft gear slots
+                    if (!useModel) this.applyLimbColor(slot, this.baseSkinColor);
+                    continue;
                 }
-            });
-            mesh.dispose(); // Dispose container
+
+                if (useModel) {
+                    // HARD GEAR: Load and attach 3D Model
+                    const modelPath = `data/models/${itemName.replace(/ /g, "")}.json`;
+                    const itemMesh = await this.assets.loadModel(modelPath);
+                    if (!itemMesh) continue;
+
+                    this._disableCollisions(itemMesh);
+
+                    if (slot === "Weapon") {
+                        itemMesh.parent = this.playerLimbs.handR || this.playerLimbs.armR;
+                        itemMesh.position = new BABYLON.Vector3(0, 0, 0); // Reset offset, hand is precise
+                        itemMesh.rotation.x = Math.PI / 2;
+                        itemMesh.rotation.z = Math.PI / 4;
+                        this.currentWeaponMesh = itemMesh;
+                    } else if (slot === "Head") {
+                        itemMesh.parent = this.playerLimbs.head;
+                        itemMesh.position = new BABYLON.Vector3(0, 0, 0);
+                        itemMesh.scaling.setAll(1.0);
+                        this.currentArmorParts.push(itemMesh);
+                        this.toggleHair(false);
+                    } else {
+                        itemMesh.parent = this.mesh;
+                        itemMesh.position = new BABYLON.Vector3(0, 0, 0);
+                        this.currentArmorParts.push(itemMesh);
+                    }
+                } else {
+                    // SOFT GEAR: Apply Material/Color swap
+                    this.applyLimbColor(slot, colorHex);
+                }
+            }
+
+            // Helmet check: If no head gear is equipped, show hair
+            if (equipment["Head"]?.name === "None" || equipment["Head"]?.Name === "None") {
+                this.toggleHair(true);
+            }
+
+            console.log(`✅ Hybrid Equipment update complete.`);
+        } catch (error) {
+            console.error("❌ Fatal error during updateGear:", error);
+            // Attempt to restore hair visibility as a fallback
+            this.toggleHair(true);
         }
     }
+
+    /**
+     * Applies a material color override to a limb group.
+     */
+    applyLimbColor(slot, colorHex) {
+        const meshes = this.limbGroups[slot];
+        if (!meshes || meshes.length === 0) return;
+
+        const color = BABYLON.Color3.FromHexString(colorHex);
+        meshes.forEach(m => {
+            if (m.material) {
+                m.material.diffuseColor = color;
+            }
+        });
+        console.log(`🎨 Applied ${colorHex} to ${slot} group (${meshes.length} meshes)`);
+    }
+
 
     cachePlayerLimbs() {
         const children = this.mesh.getChildMeshes();
-        // Helper to find best match
-        const findMesh = (keywords) => {
-            for (let k of keywords) {
-                const match = children.find(m => m.name.toLowerCase().includes(k.toLowerCase()));
-                if (match) return match;
-            }
-            return null;
+
+        // Helper to categorize meshes
+        const categorize = (keywords) => {
+            return children.filter(m => {
+                const name = m.name.toLowerCase();
+                return keywords.some(k => name.includes(k.toLowerCase()));
+            });
         };
 
+        // 1. Legacy Limb Mapping for animations
         this.playerLimbs = {
-            head: findMesh(["head", "neck"]),
-            torso: findMesh(["chest", "spine", "body"]),
-            armL: findMesh(["arm_upper_l", "arm_l", "shoulder_l"]),
-            armR: findMesh(["arm_upper_r", "arm_r", "shoulder_r"]),
-            legL: findMesh(["thigh_l", "leg_l", "up_leg_l"]),
-            legR: findMesh(["thigh_r", "leg_r", "up_leg_r"]),
-            handR: findMesh(["hand_r", "wrist_r"])
+            head: children.find(m => m.name.toLowerCase().includes("head_core")) || children.find(m => m.name.toLowerCase().includes("neck")),
+            chest: categorize(["chest_core"])[0], // Explicit chest for gear parenting
+            torso: categorize(["pelvis", "spine"])[0],
+            armL: categorize(["arm_upper_l", "shoulder_l"])[0],
+            armR: categorize(["arm_upper_r", "shoulder_r"])[0],
+            handR: categorize(["hand_r", "wrist_r"])[0],
+            legL: categorize(["thigh_l"])[0],
+            legR: categorize(["thigh_r"])[0]
+        };
+
+        // 2. Hybrid System Mapping (Material Groups)
+        this.limbGroups = {
+            Head: categorize(["head_core", "neck"]),
+            Chest: categorize(["chest", "spine", "stomach", "pelvis", "shoulder", "wrap", "shorts", "bust"]), // Added bust
+            Arms: categorize(["arm_upper", "arm_lower", "elbow", "sleeve"]),
+            Gloves: categorize(["hand", "wrist"]),
+            Legs: categorize(["thigh", "calf", "knee"]),
+            Feet: categorize(["foot", "boot", "sole"])
         };
 
         // Cache initial Torso Y for bobbing
         if (this.playerLimbs.torso) {
             this.initialTorsoY = this.playerLimbs.torso.position.y;
         }
+
+        console.log("🧍 Player Limbs Cached & Grouped for Hybrid System", this.limbGroups);
     }
 
     updateHairOnMesh(length, colorHex) {
         if (!this.playerLimbs.head) return;
-
-        // Find or create hair anchor
-        // Note: The hair anchor is usually part of the head mesh children
-        let anchor = this.playerLimbs.head.getChildMeshes().find(m => m.name.includes("hair_anchor"));
-        if (!anchor) {
-            // Create if missing (some models might not have it)
-            anchor = new BABYLON.TransformNode("hair_anchor", this.scene);
-            anchor.parent = this.playerLimbs.head;
-            anchor.position.y = 0.1; // Top of head
-        }
+        this.lastHairLength = length;
+        this.lastHairColor = colorHex;
 
         const hColor = this.assets.hexToColor(colorHex);
 
-        let hair = anchor.getChildren().find(c => c.name === "hair_geometry");
-        if (!hair) {
-            hair = BABYLON.MeshBuilder.CreateBox("hair_geometry", { width: 0.47, height: 0.2, depth: 0.47 }, this.scene);
-            hair.parent = anchor;
-            hair.position.y = -0.1;
-            hair.material = new BABYLON.StandardMaterial("hair_mat", this.scene);
-            this._disableCollisions(hair);
+        // PAINTED HAIR: Find "hair_base" (from JSON model) and color it
+        const headMeshes = this.playerLimbs.head.getChildMeshes();
+        const hairBase = headMeshes.find(m => m.name.toLowerCase().includes("hair_base"));
+
+        if (hairBase && hairBase.material) {
+            hairBase.material.diffuseColor = hColor;
+            hairBase.material.specularColor = new BABYLON.Color3(0, 0, 0); // Matte
+
+            // Toggle visibility based on length (0 = shaved)
+            hairBase.isVisible = length > 0.05;
         }
 
-        hair.material.diffuseColor = hColor;
-        hair.scaling.y = 1 + length * 3;
-        hair.position.y = -(hair.scaling.y * 0.1);
+        // Clean up any old anchor or procedural spikes
+        const oldAnchor = headMeshes.find(m => m.name.includes("hair_anchor"));
+        if (oldAnchor) oldAnchor.dispose();
+    }
+
+    updateFaceOnMesh() {
+        if (!this.playerLimbs.head) return;
+
+        // Find or create face anchor
+        let anchor = this.playerLimbs.head.getChildMeshes().find(m => m.name.includes("face_anchor"));
+        if (!anchor) {
+            anchor = new BABYLON.TransformNode("face_anchor", this.scene);
+            anchor.parent = this.playerLimbs.head;
+            anchor.position.z = 0.085; // Slightly forward
+            anchor.position.y = 0.02; // Face center
+        }
+
+        // Clean old face parts
+        anchor.getChildren().forEach(c => c.dispose());
+
+        const featureMat = new BABYLON.StandardMaterial("face_feature_mat", this.scene);
+        featureMat.diffuseColor = new BABYLON.Color3(0.1, 0.1, 0.1); // Dark scrapper features
+        featureMat.specularColor = new BABYLON.Color3(0, 0, 0);
+
+        // 1. EYES
+        [-0.05, 0.05].forEach(x => {
+            const eye = BABYLON.MeshBuilder.CreateSphere(`eye_${x > 0 ? 'R' : 'L'}`, {
+                diameterX: 0.035,
+                diameterY: 0.025,
+                diameterZ: 0.01,
+                segments: 8
+            }, this.scene);
+            eye.parent = anchor;
+            eye.position.set(x, 0.03, 0);
+            eye.material = featureMat;
+            this._disableCollisions(eye);
+        });
+
+        // 2. NOSE (Tiny scrapper box/slug)
+        const nose = BABYLON.MeshBuilder.CreateBox("nose", { width: 0.02, height: 0.03, depth: 0.03 }, this.scene);
+        nose.parent = anchor;
+        nose.position.set(0, 0, 0);
+        nose.material = featureMat;
+        this._disableCollisions(nose);
+
+        // 3. MOUTH (Horizontal strip/detail)
+        const mouth = BABYLON.MeshBuilder.CreateBox("mouth", { width: 0.05, height: 0.01, depth: 0.01 }, this.scene);
+        mouth.parent = anchor;
+        mouth.position.set(0, -0.05, 0);
+        mouth.material = featureMat;
+        this._disableCollisions(mouth);
+    }
+
+    toggleHair(show) {
+        if (!this.playerLimbs.head) return;
+        const hairBase = this.playerLimbs.head.getChildMeshes().find(m => m.name.toLowerCase().includes("hair_base"));
+        if (hairBase) hairBase.isVisible = show && (this.lastHairLength > 0.05);
     }
 
     _disableCollisions(mesh) {

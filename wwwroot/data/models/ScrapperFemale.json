@@ -178,7 +178,7 @@
             ],
             "Scale": [
                 0.09,
-                0.14,
+                0.09,
                 0.09
             ],
             "ColorHex": "#bd9a7a",
@@ -187,12 +187,12 @@
         },
         {
             "Id": "head_core",
-            "ParentId": "neck",
+            "ParentId": "chest_core",
             "Shape": "Sphere",
             "Position": [
                 0.0,
-                0.16,
-                0.02
+                0.35,
+                0.0
             ],
             "Rotation": [
                 0,
@@ -201,7 +201,7 @@
             ],
             "Scale": [
                 0.17,
-                0.21,
+                0.24,
                 0.19
             ],
             "ColorHex": "#bd9a7a",
@@ -209,95 +209,26 @@
             "Operation": "Union"
         },
         {
-            "Id": "jaw",
-            "ParentId": "head_core",
-            "Shape": "Box",
-            "Position": [
-                0.0,
-                -0.09,
-                0.03
-            ],
-            "Rotation": [
-                15,
-                0,
-                0
-            ],
-            "Scale": [
-                0.12,
-                0.08,
-                0.1
-            ],
-            "ColorHex": "#bd9a7a",
-            "Material": "Plastic",
-            "Operation": "Union"
-        },
-        {
-            "Id": "hair_bun",
+            "Id": "hair_base",
             "ParentId": "head_core",
             "Shape": "Sphere",
             "Position": [
                 0.0,
-                0.15,
-                -0.1
+                0.09,
+                -0.03
             ],
             "Rotation": [
-                0,
+                -15,
                 0,
                 0
             ],
             "Scale": [
-                0.12,
-                0.12,
-                0.12
+                0.18,
+                0.14,
+                0.19
             ],
-            "ColorHex": "#3d3635",
+            "ColorHex": "#2e2b26",
             "Material": "Plastic",
-            "Operation": "Union"
-        },
-        {
-            "Id": "eye_L",
-            "ParentId": "head_core",
-            "Shape": "Sphere",
-            "Position": [
-                -0.05,
-                0.02,
-                0.08
-            ],
-            "Rotation": [
-                0,
-                0,
-                0
-            ],
-            "Scale": [
-                0.025,
-                0.025,
-                0.02
-            ],
-            "ColorHex": "#2e2e2e",
-            "Material": "Glass",
-            "Operation": "Union"
-        },
-        {
-            "Id": "eye_R",
-            "ParentId": "head_core",
-            "Shape": "Sphere",
-            "Position": [
-                0.05,
-                0.02,
-                0.08
-            ],
-            "Rotation": [
-                0,
-                0,
-                0
-            ],
-            "Scale": [
-                0.025,
-                0.025,
-                0.02
-            ],
-            "ColorHex": "#2e2e2e",
-            "Material": "Glass",
             "Operation": "Union"
         },
         {

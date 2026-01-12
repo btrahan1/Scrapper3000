@@ -6,7 +6,8 @@ namespace Scrapper3000.Services
 {
     public class ScrapperStateService
     {
-        public event Action OnStateChanged; // Triggers Save
+        public event Action? OnStateChanged; // Triggers Save
+        public event Action? OnEquipmentChanged;
         public event Action OnVisualUpdate; // Triggers Re-render only
         public event Action OnRespawnTriggered; // Triggers JS Respawn
         public event Action OnPlayerDied; // Triggers JS Death Anim
@@ -21,8 +22,18 @@ namespace Scrapper3000.Services
         public int MaxHP { get; private set; } = 100;
         public int AttackPower { get; private set; } = 10;
         public int Defense { get; private set; } = 5;
-        public string EquippedWeapon { get; private set; } = "Rusty Stick";
-        public string EquippedArmor { get; private set; } = "Basic Overalls";
+        
+        // Multi-Slot Equipment System
+        public Dictionary<string, string> EquippedSlots { get; private set; } = new()
+        {
+            { "Weapon", "Rusty Stick" },
+            { "Head", "None" },
+            { "Chest", "Basic Overalls" },
+            { "Legs", "None" },
+            { "Feet", "None" },
+            { "Arms", "None" },
+            { "Gloves", "None" }
+        };
 
         // --- View State ---
         public bool IsFirstPerson { get; private set; } = true;
@@ -34,6 +45,7 @@ namespace Scrapper3000.Services
         public string Gender { get; private set; } = "Male"; // Male, Female
         public float HairLength { get; private set; } = 0.5f; // 0 to 1
         public string HairColor { get; private set; } = "#4b301a"; // Dark Brown
+        public string SkinColor { get; private set; } = "#bd9a7a"; // Default Skin
         public string PlayerName { get; private set; } = "Scrapper";
         public bool IsNaming { get; private set; } = false;
         public bool IsShopOpen { get; private set; } = false;
@@ -66,24 +78,37 @@ namespace Scrapper3000.Services
             { "Metal", 25 }
         };
 
-        public record ShopItem(string Name, int Price, string Type, int Value, string Description);
+        public record ShopItem(string Name, int Price, string Type, int Value, string Description, string Slot = "Weapon", string ColorHex = "#808080", bool UseModel = false);
         public List<ShopItem> AvailableGear { get; private set; } = new()
         {
-            new ShopItem("Spiked Stick", 150, "weapon", 3, "A stick with some nasty nails in it."),
-            new ShopItem("Metal Pipe", 400, "weapon", 6, "Heavy, cold, and very effective."),
-            new ShopItem("Heavy Spiked Mace", 800, "weapon", 15, "A brutal masterpiece of scrap engineering."),
-            new ShopItem("Wicked Pipe Weapon", 1200, "weapon", 20, "Jagged, spiked, and utterly lethal."),
-            new ShopItem("ScavengerBot MK4", 2500, "bot", 1, "A high-fidelity scavenging assistant."),
-            new ShopItem("Heavy Rebar", 1000, "weapon", 12, "Concrete-shattering power."),
-            new ShopItem("Reinforced Overalls", 200, "armor", 8, "Stitched with scrap leather."),
-            new ShopItem("Dusty Faded Overalls", 75, "armor", 2, "Well-worn but reliable. Has knee pads."),
-            new ShopItem("Scrap Plate Vest", 600, "armor", 20, "Literal metal plates strapped to your chest."),
-            new ShopItem("Vintage Leather Helmet", 350, "armor", 10, "Classic protection. Keeps your ears warm."),
-            new ShopItem("Simple Leather Boots", 250, "armor", 5, "Good treads. Better than barefoot."),
-            new ShopItem("Simple Leather Vest", 400, "armor", 15, "Tough leather vest. Stylish too."),
-            new ShopItem("Simple Leather Gloves", 300, "armor", 5, "Better grip, fewer splinters."),
-            new ShopItem("Simple Leather Leggings", 350, "armor", 10, "Pants! Finally!"),
-            new ShopItem("Simple Leather Sleeves", 250, "armor", 8, "Coverage for your arms.")
+            // Starting items
+            new ShopItem("Rusty Stick", 0, "weapon", 0, "Your trusty starting weapon.", "Weapon", "#ffffff", true),
+            new ShopItem("Basic Overalls", 0, "armor", 5, "Basic protection for scrappers.", "Chest", "#5d7687", false),
+            
+            // Weapons (UseModel = true)
+            new ShopItem("Spiked Stick", 150, "weapon", 3, "A stick with some nasty nails in it.", "Weapon", "#ffffff", true),
+            new ShopItem("Metal Pipe", 400, "weapon", 6, "Heavy, cold, and very effective.", "Weapon", "#ffffff", true),
+            new ShopItem("Heavy Spiked Mace", 800, "weapon", 15, "A brutal masterpiece of scrap engineering.", "Weapon", "#ffffff", true),
+            new ShopItem("Wicked Pipe Weapon", 1200, "weapon", 20, "Jagged, spiked, and utterly lethal.", "Weapon", "#ffffff", true),
+            new ShopItem("Heavy Rebar", 1000, "weapon", 12, "Concrete-shattering power.", "Weapon", "#ffffff", true),
+            
+            // Bots
+            new ShopItem("ScavengerBot MK4", 2500, "bot", 1, "A high-fidelity scavenging assistant.", "None", "#ffffff", true),
+
+            // Armor - Chest
+            new ShopItem("Reinforced Overalls", 200, "armor", 8, "Stitched with scrap leather.", "Chest", "#4a3c31", false),
+            new ShopItem("Dusty Faded Overalls", 75, "armor", 2, "Well-worn but reliable. Has knee pads.", "Chest", "#5d7687", false),
+            new ShopItem("Scrap Plate Vest", 600, "armor", 20, "Literal metal plates strapped to your chest.", "Chest", "#a1a1a1", false),
+            new ShopItem("Simple Leather Vest", 400, "armor", 15, "Tough leather vest. Stylish too.", "Chest", "#5c4033", false),
+            
+            // Armor - Head (UseModel = true)
+            new ShopItem("Vintage Leather Helmet", 350, "armor", 10, "Classic protection. Keeps your ears warm.", "Head", "#4a332a", true),
+            
+            // Armor - Others (Texture-based)
+            new ShopItem("Simple Leather Boots", 250, "armor", 5, "Good treads. Better than barefoot.", "Feet", "#5c4033", false),
+            new ShopItem("Simple Leather Gloves", 300, "armor", 5, "Better grip, fewer splinters.", "Gloves", "#4a3b2a", false),
+            new ShopItem("Simple Leather Leggings", 350, "armor", 10, "Pants! Finally!", "Legs", "#262626", false),
+            new ShopItem("Simple Leather Sleeves", 250, "armor", 8, "Coverage for your arms.", "Arms", "#4a3c31", false)
         };
         
         public List<string> OwnedGear { get; private set; } = new() { "Rusty Stick", "Basic Overalls" };
@@ -372,8 +397,11 @@ namespace Scrapper3000.Services
                 Credits -= item.Price;
                 OwnedGear.Add(item.Name);
                 
-                if (item.Type == "weapon") EquippedWeapon = item.Name;
-                else if (item.Type == "armor") EquippedArmor = item.Name;
+                // Auto-equip if slot is empty or it's a weapon
+                if (item.Slot != "None" && (EquippedSlots[item.Slot] == "None" || item.Type == "weapon"))
+                {
+                    EquipItem(item.Name, item.Slot);
+                }
 
                 CalculateStats();
                 NotifyStateChange();
@@ -381,20 +409,70 @@ namespace Scrapper3000.Services
             }
         }
 
+        public void EquipItem(string itemName, string slot)
+        {
+            if (!EquippedSlots.ContainsKey(slot)) return;
+            if (!OwnedGear.Contains(itemName)) return;
+            
+            EquippedSlots[slot] = itemName;
+            CalculateStats();
+            OnEquipmentChanged?.Invoke();
+            NotifyStateChange();
+        }
+
+        public void UnequipSlot(string slot)
+        {
+            if (!EquippedSlots.ContainsKey(slot)) return;
+            EquippedSlots[slot] = "None";
+            CalculateStats();
+            OnEquipmentChanged?.Invoke();
+            NotifyStateChange();
+        }
+
+        [JSInvokable]
+        public string GetEquippedItemsMetadata()
+        {
+            try 
+            {
+                var metadata = new Dictionary<string, ShopItem>();
+                foreach (var slot in EquippedSlots)
+                {
+                    var item = AvailableGear.FirstOrDefault(i => i.Name == slot.Value);
+                    if (item != null)
+                    {
+                        metadata[slot.Key] = item;
+                    }
+                    else
+                    {
+                        metadata[slot.Key] = new ShopItem("None", 0, "none", 0, "Empty slot", slot.Key, SkinColor, false);
+                    }
+                }
+                return System.Text.Json.JsonSerializer.Serialize(metadata);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[C#] Metadata Error: {ex.Message}");
+                return "{}";
+            }
+        }
+
         private void CalculateStats()
         {
             // Base stats (Scrapper defaults) + Level Scaling
-            // Level 1: 10 ATK, 5 DEF
-            // Level 2: 12 ATK, 6 DEF
             int atk = 10 + ((Level - 1) * 2);
             int def = 5 + ((Level - 1) * 1);
 
             // Add bonuses from equipped gear
-            var weapon = AvailableGear.Find(i => i.Name == EquippedWeapon);
-            if (weapon != null) atk += weapon.Value;
-
-            var armor = AvailableGear.Find(i => i.Name == EquippedArmor);
-            if (armor != null) def += armor.Value;
+            foreach (var slot in EquippedSlots)
+            {
+                if (slot.Value == "None") continue;
+                var item = AvailableGear.Find(i => i.Name == slot.Value);
+                if (item != null)
+                {
+                    if (item.Type == "weapon") atk += item.Value;
+                    else if (item.Type == "armor") def += item.Value;
+                }
+            }
 
             AttackPower = atk;
             Defense = def;
@@ -419,8 +497,8 @@ namespace Scrapper3000.Services
                 hairLength = HairLength,
                 hairColor = HairColor,
                 playerName = PlayerName,
-                equippedWeapon = EquippedWeapon,
-                equippedArmor = EquippedArmor,
+                skinColor = SkinColor,
+                equippedSlots = EquippedSlots,
                 ownedGear = OwnedGear
             });
         }
@@ -454,9 +532,28 @@ namespace Scrapper3000.Services
                     Gender = state.Gender ?? Gender;
                     HairLength = state.HairLength;
                     HairColor = state.HairColor ?? HairColor;
+                    SkinColor = state.SkinColor ?? SkinColor;
                     PlayerName = !string.IsNullOrEmpty(state.PlayerName) ? state.PlayerName : PlayerName;
-                    EquippedWeapon = state.EquippedWeapon ?? EquippedWeapon;
-                    EquippedArmor = state.EquippedArmor ?? EquippedArmor;
+                    
+                    // Migrate old saves to new equipment system
+                    if (state.EquippedSlots != null)
+                    {
+                        EquippedSlots = state.EquippedSlots;
+                    }
+                    else
+                    {
+                        // Legacy migration: convert old weapon/armor to new slots
+                        if (!string.IsNullOrEmpty(state.EquippedWeapon))
+                            EquippedSlots["Weapon"] = state.EquippedWeapon;
+                        if (!string.IsNullOrEmpty(state.EquippedArmor))
+                        {
+                            // Determine slot based on item name
+                            var armorItem = AvailableGear.Find(i => i.Name == state.EquippedArmor);
+                            if (armorItem != null)
+                                EquippedSlots[armorItem.Slot] = state.EquippedArmor;
+                        }
+                    }
+                    
                     OwnedGear = state.OwnedGear ?? new List<string> { "Rusty Stick", "Basic Overalls" };
 
                     CalculateStats();
@@ -515,8 +612,11 @@ namespace Scrapper3000.Services
             public float HairLength { get; set; }
             public string HairColor { get; set; }
             public string PlayerName { get; set; }
-            public string EquippedWeapon { get; set; }
-            public string EquippedArmor { get; set; }
+            public string? SkinColor { get; set; }
+            public Dictionary<string, string>? EquippedSlots { get; set; }
+            // Legacy fields for backward compatibility
+            public string? EquippedWeapon { get; set; }
+            public string? EquippedArmor { get; set; }
             public List<string> OwnedGear { get; set; }
             public Dictionary<string, int> Inventory { get; set; }
         }

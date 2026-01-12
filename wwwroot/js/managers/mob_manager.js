@@ -47,7 +47,7 @@ class MobManager {
 
             // Spawn 1-3 physical loot items
             const count = Math.floor(Math.random() * 3) + 1;
-            const items = ["Iron", "Copper", "Plastic"];
+            const items = ["Wood", "Cloth", "Metal", "Rubber", "Plastic"]; // ALIGNED WITH C#
 
             for (let i = 0; i < count; i++) {
                 const loot = items[Math.floor(Math.random() * items.length)];
@@ -69,9 +69,11 @@ class MobManager {
 
         // Color based on type
         const mat = new BABYLON.StandardMaterial("loot_mat", this.scene);
-        if (itemType === "Iron") mat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
-        else if (itemType === "Copper") mat.diffuseColor = new BABYLON.Color3(0.8, 0.5, 0.2);
-        else mat.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.8);
+        if (itemType === "Metal") mat.diffuseColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+        else if (itemType === "Wood") mat.diffuseColor = new BABYLON.Color3(0.5, 0.3, 0.1);
+        else if (itemType === "Cloth") mat.diffuseColor = new BABYLON.Color3(0.7, 0.6, 0.5);
+        else if (itemType === "Rubber") mat.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+        else mat.diffuseColor = new BABYLON.Color3(0.2, 0.6, 0.8); // Plastic
         mat.emissiveColor = mat.diffuseColor.scale(0.3);
         box.material = mat;
 
@@ -131,8 +133,13 @@ class MobManager {
         // C# Call
         this.dotNetHelper.invokeMethodAsync('AddExperience', 10);
 
-        // Animation
-        // Ideally play death anim, then dispose. For now:
+        // LOOT CHANCE (50% drop rate)
+        if (Math.random() > 0.5) {
+            const items = ["Wood", "Cloth", "Metal", "Rubber", "Plastic"];
+            const loot = items[Math.floor(Math.random() * items.length)];
+            this.spawnLootBox(mob.position, loot);
+        }
+
         mob.dispose();
     }
 
@@ -184,7 +191,8 @@ class MobManager {
                 rat.aiState = "PICK";
                 rat.aiWaitTimer = 0;
                 rat.biteCooldown = 0;
-                rat.limbs = {}; // Cache logic if needed
+                rat.animTimer = Math.random() * 10; // Random phase
+                this._cacheMobLimbs(rat, ["leg_BL_thigh", "leg_BR_thigh", "arm_FL", "arm_FR", "root_hips"]);
 
                 this.rats.push(rat);
             }
@@ -209,10 +217,24 @@ class MobManager {
                 wolf.aiState = "PICK";
                 wolf.biteCooldown = 0;
                 wolf.stats = { HP: 50, maxHP: 50 }; // Tougher
+                wolf.animTimer = Math.random() * 10;
+                this._cacheMobLimbs(wolf, ["leg_bl_hip", "leg_br_hip", "leg_fl_shoulder", "leg_fr_shoulder", "body_main"]);
 
                 this.wolves.push(wolf);
             }
         }
+    }
+
+    _cacheMobLimbs(mob, keywords) {
+        mob.limbs = {};
+        mob.getChildMeshes().forEach(m => {
+            const name = m.name.toLowerCase();
+            keywords.forEach(k => {
+                if (name.includes(k.toLowerCase())) {
+                    mob.limbs[k] = m;
+                }
+            });
+        });
     }
 
     _enablePicking(root) {
@@ -247,8 +269,14 @@ class MobManager {
 
     update(dt) {
         // AI Loop
-        this.wolves.forEach(w => this.updateAI(w, dt));
-        this.rats.forEach(r => this.updateAI(r, dt));
+        this.wolves.forEach(w => {
+            this.updateAI(w, dt);
+            this.animateMob(w, dt);
+        });
+        this.rats.forEach(r => {
+            this.updateAI(r, dt);
+            this.animateMob(r, dt);
+        });
 
         // Loot Box Proximity Check
         if (this.player.mesh) {
@@ -317,6 +345,44 @@ class MobManager {
                     this.mobBite(mob, dt);
                 }
             }
+        }
+    }
+
+    animateMob(mob, dt) {
+        if (!mob || mob.isDisposed() || !mob.limbs) return;
+
+        // Only animate if moving
+        const isMoving = mob.aiState === "MOVE" || mob.aiState === "ATTACK";
+        if (!isMoving) {
+            // Reset limbs slowly (optional)
+            return;
+        }
+
+        const isRat = mob.name.toLowerCase().includes("rat");
+        const speed = mob.aiState === "ATTACK" ? 15.0 : 8.0;
+        mob.animTimer += dt * speed;
+
+        const wave = Math.sin(mob.animTimer);
+        const invWave = Math.sin(mob.animTimer + Math.PI);
+
+        if (isRat) {
+            // Scurry logic for Rats
+            if (mob.limbs.leg_BL_thigh) mob.limbs.leg_BL_thigh.rotation.x = wave * 0.4;
+            if (mob.limbs.leg_BR_thigh) mob.limbs.leg_BR_thigh.rotation.x = invWave * 0.4;
+            if (mob.limbs.arm_FL) mob.limbs.arm_FL.rotation.x = invWave * 0.4;
+            if (mob.limbs.arm_FR) mob.limbs.arm_FR.rotation.x = wave * 0.4;
+
+            // Simple body bob
+            if (mob.limbs.root_hips) mob.limbs.root_hips.position.y = 0.4 + Math.abs(wave) * 0.05;
+        } else {
+            // Stalk/Gallop logic for Wolves
+            if (mob.limbs.leg_bl_hip) mob.limbs.leg_bl_hip.rotation.x = wave * 0.3;
+            if (mob.limbs.leg_br_hip) mob.limbs.leg_br_hip.rotation.x = invWave * 0.3;
+            if (mob.limbs.leg_fl_shoulder) mob.limbs.leg_fl_shoulder.rotation.x = invWave * 0.3;
+            if (mob.limbs.leg_fr_shoulder) mob.limbs.leg_fr_shoulder.rotation.x = wave * 0.3;
+
+            // Body bob
+            if (mob.limbs.body_main) mob.limbs.body_main.position.y = 0.5 + Math.abs(wave) * 0.08;
         }
     }
 
