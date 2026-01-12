@@ -9,6 +9,18 @@ class MobManager {
         this.wolves = [];
     }
 
+    clearMobs() {
+        this.rats.forEach(m => m.dispose());
+        this.wolves.forEach(m => m.dispose());
+        this.rats = [];
+        this.wolves = [];
+
+        // Also clear any lingering loot
+        this.scene.meshes.forEach(m => {
+            if (m.name.startsWith("loot_")) m.dispose();
+        });
+    }
+
     notifyPlayerHit(data) {
         // Called when PlayerController detects a hit
         const mesh = data.mesh;
@@ -41,6 +53,9 @@ class MobManager {
 
         console.log("Scrap Hit! HP: " + pile.stats.HP);
         this.showFloatingDamage(point, "SMASH", "#cccccc");
+        if (window.Scrapper3000) {
+            window.Scrapper3000.createParticleSystem("spark", point);
+        }
 
         if (pile.stats.HP <= 0) {
             this.showFloatingDamage(pile.position, "RESOURCES FOUND", "#00ff66");
@@ -283,12 +298,19 @@ class MobManager {
             const lootBoxes = this.scene.meshes.filter(m => m.name.startsWith("loot_"));
             lootBoxes.forEach(box => {
                 const dist = BABYLON.Vector3.Distance(this.player.mesh.position, box.position);
-                if (dist < 1.0 && box.itemType) {
-                    this.dotNetHelper.invokeMethodAsync('OnItemPickedUp', box.itemType);
-                    box.dispose();
+                if (dist < 1.0) {
+                    this.collectLoot(box);
                 }
             });
         }
+    }
+
+    collectLoot(box) {
+        if (!box || box.isDisposed()) return;
+        if (box.itemType) {
+            this.dotNetHelper.invokeMethodAsync('OnItemPickedUp', box.itemType);
+        }
+        box.dispose();
     }
 
     updateAI(mob, dt) {
@@ -402,6 +424,9 @@ class MobManager {
 
         // Visuals
         this.showFloatingDamage(this.player.mesh.position, dmg, "#ff0000");
+        if (window.Scrapper3000) {
+            window.Scrapper3000.createParticleSystem("blood", this.player.mesh.position);
+        }
 
         // C# Notify
         this.dotNetHelper.invokeMethodAsync('TakeDamage', dmg);

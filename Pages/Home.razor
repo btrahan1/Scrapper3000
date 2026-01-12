@@ -50,10 +50,9 @@
         <div class="landing-page">
             <div class="landing-box">
                 <h1>SCRAPPER 3000</h1>
-                <p class="welcome">Welcome back, <span class="player-name">@State.PlayerName</span></p>
+                <p class="welcome">The Junkyard Awaits.</p>
                 <div class="landing-actions">
-                    <button class="btn-primary" @onclick="ContinueJourney">CONTINUE JOURNEY</button>
-                    <button class="btn-secondary" @onclick="State.StartNewGame">START NEW GAME</button>
+                    <button class="btn-primary" @onclick="PrepareSlotSelection">LOAD / START GAME</button>
                     
                     <div class="storage-toggle">
                         <label>Storage Mode:</label>
@@ -62,6 +61,48 @@
                             <option value="firebase">Cloud (Firestore)</option>
                         </select>
                     </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (State.IsSelectingSlot)
+    {
+        <div class="slot-selection-overlay">
+            <div class="slot-selection-box">
+                <div class="slot-header">
+                    <h2>SELECT SAVE SLOT</h2>
+                    <button class="btn-close" @onclick="() => State.SelectSlot(State.SelectedSlotId)">X</button>
+                </div>
+                
+                <div class="slot-list">
+                    @foreach (var slot in State.AvailableSlots)
+                    {
+                        <div class="slot-card @(slot.IsEmpty ? "empty" : "occupied")" @onclick="() => HandleSlotClick(slot)">
+                            <div class="slot-num">SLOT @slot.SlotId</div>
+                            @if (slot.IsEmpty)
+                            {
+                                <div class="slot-info">— EMPTY SLOT —</div>
+                                <button class="btn-slot-action new">START NEW</button>
+                            }
+                            else
+                            {
+                                <div class="slot-info">
+                                    <span class="slot-name">@slot.PlayerName</span>
+                                    <span class="slot-details">LVL @slot.Level | @slot.Gender</span>
+                                    <div class="slot-hp">HP: @slot.HP / @slot.MaxHP</div>
+                                </div>
+                                <div class="slot-actions">
+                                    <button class="btn-slot-action load">CONTINUE</button>
+                                    <button class="btn-slot-action delete" @onclick:stopPropagation="true" @onclick="() => DeleteSlot(slot.SlotId)">🗑️</button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                
+                <div class="slot-footer">
+                    <button class="btn-back" @onclick="State.ExitGame">BACK TO MENU</button>
                 </div>
             </div>
         </div>
@@ -325,6 +366,37 @@
         await JSRuntime.InvokeVoidAsync("Scrapper3000.jumpToJunkyard", State.Gender, State.HairLength, State.HairColor);
     }
 
+    private async Task PrepareSlotSelection()
+    {
+        await JSRuntime.InvokeVoidAsync("StorageBridge.getAvailableSlots", _objRef);
+        State.ShowSlotSelection();
+    }
+
+    private async Task HandleSlotClick(ScrapperStateService.SaveSlotSummary slot)
+    {
+        State.SelectSlot(slot.SlotId);
+        
+        if (slot.IsEmpty)
+        {
+            State.StartNewGame();
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("StorageBridge.loadPlayerState", _objRef, slot.SlotId);
+        }
+    }
+
+    private async Task DeleteSlot(int slotId)
+    {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete Save Slot {slotId}? This cannot be undone.");
+        if (confirm)
+        {
+            await JSRuntime.InvokeVoidAsync("StorageBridge.deletePlayerState", slotId);
+            // Refresh slots
+            await JSRuntime.InvokeVoidAsync("StorageBridge.getAvailableSlots", _objRef);
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -334,7 +406,8 @@
             // Initialize Storage Bridge
             await JSRuntime.InvokeVoidAsync("StorageBridge.setStorageMode", _storageMode);
             await JSRuntime.InvokeVoidAsync("StorageBridge.init", GetFirebaseConfig());
-            await JSRuntime.InvokeVoidAsync("StorageBridge.loadPlayerState", _objRef);
+            // Don't auto-load default slot, wait for selection
+            // await JSRuntime.InvokeVoidAsync("StorageBridge.loadPlayerState", _objRef);
 
             await JSRuntime.InvokeVoidAsync("Scrapper3000.init", _objRef, "renderCanvas");
             
@@ -347,6 +420,8 @@
             State.OnVisualUpdate += HandleVisualUpdate;
             State.OnRespawnTriggered += HandleRespawn;
             State.OnPlayerDied += HandleDeath;
+
+            State.LoadingFinished();
         }
     }
 
@@ -412,8 +487,8 @@
                     try 
                     {
                         var json = State.GetSerializedState();
-                        await JSRuntime.InvokeVoidAsync("StorageBridge.savePlayerState", json);
-                        Console.WriteLine($"[RAZOR] State Saved ({_storageMode}) at {DateTime.Now:HH:mm:ss}.");
+                        await JSRuntime.InvokeVoidAsync("StorageBridge.savePlayerState", json, State.SelectedSlotId);
+                        Console.WriteLine($"[RAZOR] State Saved ({_storageMode}) to slot {State.SelectedSlotId} at {DateTime.Now:HH:mm:ss}.");
                     }
                     catch (Exception ex)
                     {
@@ -444,7 +519,7 @@
 
     private async Task ManualSave()
     {
-        await JSRuntime.InvokeVoidAsync("StorageBridge.savePlayerState", State.GetSerializedState());
+        await JSRuntime.InvokeVoidAsync("StorageBridge.savePlayerState", State.GetSerializedState(), State.SelectedSlotId);
         State.SetDialogue("Game progress saved.");
     }
 
@@ -471,7 +546,17 @@
     public void OnPlayerStateLoaded(string? stateJson)
     {
         State.LoadFromState(stateJson);
+        if (!string.IsNullOrEmpty(stateJson))
+        {
+            ContinueJourney();
+        }
         StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OnSlotsLoaded(string json)
+    {
+        State.OnSlotsLoaded(json);
     }
 
     [JSInvokable]
@@ -1500,5 +1585,182 @@
         height: 100%;
         background: #00ccff;
         transition: width 0.3s ease;
+    }
+
+    /* Slot Selection UI */
+    .slot-selection-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        backdrop-filter: blur(5px);
+    }
+
+    .slot-selection-box {
+        width: 90%;
+        max-width: 800px;
+        background: #1a1a1f;
+        border: 2px solid #333;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }
+
+    .slot-header {
+        background: #222;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #333;
+    }
+
+    .slot-header h2 {
+        margin: 0;
+        color: #ff9900;
+        letter-spacing: 3px;
+        font-family: 'Courier New', monospace;
+    }
+
+    .slot-list {
+        padding: 30px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+    }
+
+    .slot-card {
+        background: rgba(40, 40, 50, 0.8);
+        border: 2px solid #444;
+        border-radius: 10px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 160px;
+    }
+
+    .slot-card:hover {
+        border-color: #ff9900;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(255, 153, 0, 0.2);
+    }
+
+    .slot-card.occupied {
+        background: linear-gradient(135deg, rgba(40, 40, 50, 0.8), rgba(20, 20, 25, 0.9));
+    }
+
+    .slot-card.empty {
+        border-style: dashed;
+        background: rgba(20, 20, 25, 0.5);
+    }
+
+    .slot-num {
+        font-size: 0.7rem;
+        color: #666;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    .slot-info {
+        margin: 15px 0;
+    }
+
+    .slot-name {
+        display: block;
+        font-size: 1.2rem;
+        color: #eee;
+        font-weight: bold;
+    }
+
+    .slot-details {
+        display: block;
+        font-size: 0.8rem;
+        color: #00ff66;
+        margin-top: 5px;
+    }
+
+    .slot-hp {
+        font-size: 0.7rem;
+        color: #aaa;
+        margin-top: 5px;
+    }
+
+    .slot-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .btn-slot-action.delete {
+        background: #442222;
+        color: #ff4444;
+        border: 1px solid #ff4444;
+        flex: 0 0 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .btn-slot-action.delete:hover {
+        background: #ff4444;
+        color: white;
+    }
+
+    .btn-slot-action {
+        width: 100%;
+        padding: 8px;
+        border: none;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+    }
+
+    .btn-slot-action.load {
+        background: #ff9900;
+        color: black;
+    }
+
+    .btn-slot-action.new {
+        background: #444;
+        color: #aaa;
+    }
+
+    .slot-card:hover .btn-slot-action.new {
+        background: #00ff66;
+        color: black;
+    }
+
+    .slot-footer {
+        padding: 20px;
+        background: #222;
+        text-align: center;
+    }
+
+    .btn-back {
+        background: transparent;
+        border: 1px solid #555;
+        color: #888;
+        padding: 10px 30px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .btn-back:hover {
+        border-color: #eee;
+        color: #eee;
     }
 </style>

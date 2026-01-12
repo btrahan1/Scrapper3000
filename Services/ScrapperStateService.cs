@@ -11,6 +11,7 @@ namespace Scrapper3000.Services
         public event Action OnVisualUpdate; // Triggers Re-render only
         public event Action OnRespawnTriggered; // Triggers JS Respawn
         public event Action OnPlayerDied; // Triggers JS Death Anim
+        public event Action OnSlotsLoadedEvt; // For UI refresh
 
         // --- Core Stats ---
         public int Level { get; private set; } = 1;
@@ -32,7 +33,8 @@ namespace Scrapper3000.Services
             { "Legs", "None" },
             { "Feet", "None" },
             { "Arms", "None" },
-            { "Gloves", "None" }
+            { "Gloves", "None" },
+            { "Bot", "None" }
         };
 
         // --- View State ---
@@ -54,6 +56,8 @@ namespace Scrapper3000.Services
         public bool HasExistingSave { get; private set; } = false;
         public bool IsPaused { get; private set; } = false;
         public bool IsDead { get; private set; } = false;
+        public int SelectedSlotId { get; private set; } = 1;
+        public bool IsSelectingSlot { get; private set; } = false;
 
         // --- Equipment ---
         public bool HasBackpack { get; private set; } = false;
@@ -93,7 +97,7 @@ namespace Scrapper3000.Services
             new ShopItem("Heavy Rebar", 1000, "weapon", 12, "Concrete-shattering power.", "Weapon", "#ffffff", true),
             
             // Bots
-            new ShopItem("ScavengerBot MK4", 2500, "bot", 1, "A high-fidelity scavenging assistant.", "None", "#ffffff", true),
+            new ShopItem("ScavengerBot MK4", 2500, "bot", 1, "A high-fidelity scavenging assistant.", "Bot", "#ffffff", true),
 
             // Armor - Chest
             new ShopItem("Reinforced Overalls", 200, "armor", 8, "Stitched with scrap leather.", "Chest", "#4a3c31", false),
@@ -110,6 +114,9 @@ namespace Scrapper3000.Services
             new ShopItem("Simple Leather Leggings", 350, "armor", 10, "Pants! Finally!", "Legs", "#262626", false),
             new ShopItem("Simple Leather Sleeves", 250, "armor", 8, "Coverage for your arms.", "Arms", "#4a3c31", false)
         };
+        
+        public record SaveSlotSummary(int SlotId, string PlayerName, int Level, string Gender, int HP, int MaxHP, bool IsEmpty = false);
+        public List<SaveSlotSummary> AvailableSlots { get; private set; } = new();
         
         public List<string> OwnedGear { get; private set; } = new() { "Rusty Stick", "Basic Overalls" };
 
@@ -203,6 +210,45 @@ namespace Scrapper3000.Services
             IsDead = false;
             NotifyStateChange();
             OnRespawnTriggered?.Invoke();
+        }
+
+        [JSInvokable]
+        public void OnSlotsLoaded(string json)
+        {
+            try {
+                var slots = System.Text.Json.JsonSerializer.Deserialize<List<SaveSlotSummary>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (slots != null)
+                {
+                    AvailableSlots = slots;
+                    OnSlotsLoadedEvt?.Invoke();
+                    NotifyVisualChange();
+                }
+            } catch (Exception ex) {
+                Console.WriteLine("[C#] Error parsing slots: " + ex.Message);
+            }
+        }
+
+        public void SelectSlot(int slotId)
+        {
+            SelectedSlotId = slotId;
+            IsSelectingSlot = false;
+            NotifyVisualChange();
+        }
+
+        public void ShowSlotSelection()
+        {
+            IsSelectingSlot = true;
+            IsLandingPage = false;
+            NotifyVisualChange();
+        }
+
+        [JSInvokable]
+        public void LoadingFinished()
+        {
+            IsLoading = false;
+            IsLandingPage = true;
+            DialogueText = "Sifting through the scrap... System online.";
+            NotifyVisualChange();
         }
 
         [JSInvokable]
@@ -308,6 +354,7 @@ namespace Scrapper3000.Services
             IsFirstPerson = true;
             IsLandingPage = false;
             PlayerName = "Scrapper";
+            DialogueText = "You wake up in a dim shed. The smell of rust and old oil is thick in the air. Time to get to work.";
             NotifyStateChange();
         }
 

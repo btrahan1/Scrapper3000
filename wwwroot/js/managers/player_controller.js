@@ -278,9 +278,17 @@ class PlayerController {
 
     handleHit(mesh, point) {
         console.log("HIT: " + mesh.name);
-        // Trigger particles
-        this.createHitSparks(point);
-        // Emit event for GameEngine/Blazor logic
+
+        // 1. Identify Hit Type (Blood vs Sparks)
+        const mob = mesh.parentMob || mesh;
+        const lowName = (mob.name || mesh.name).toLowerCase();
+        const isOrganic = lowName.includes("rat") || lowName.includes("wolf");
+        const fxType = isOrganic ? "blood" : "spark";
+
+        // 2. Trigger particles
+        this.createHitFX(point, fxType);
+
+        // 3. Emit event for GameEngine/Blazor logic
         const event = new CustomEvent("playerHit", {
             detail: {
                 mesh: mesh,
@@ -320,9 +328,10 @@ class PlayerController {
         }
     }
 
-    createHitSparks(pos) {
-        // Placeholder for Phase 13
-        // var particleSystem = new BABYLON.ParticleSystem("sparks", 20, this.scene);
+    createHitFX(pos, type) {
+        if (window.Scrapper3000) {
+            window.Scrapper3000.createParticleSystem(type, pos);
+        }
     }
 
     async updateGear() {
@@ -361,12 +370,24 @@ class PlayerController {
                 const colorHex = item.colorHex || item.ColorHex;
 
                 if (itemName === "None" || !itemName) {
+                    // SPECIAL: If bot slot cleared, tell BotManager
+                    if (slot === "Bot" && window.Scrapper3000 && window.Scrapper3000.bot) {
+                        window.Scrapper3000.bot.updateBot("None");
+                    }
                     // Reset limb colors to skin for soft gear slots
                     if (!useModel) this.applyLimbColor(slot, this.baseSkinColor);
                     continue;
                 }
 
                 if (useModel) {
+                    // SPECIAL: Bot Slot is handled by BotManager
+                    if (slot === "Bot") {
+                        if (window.Scrapper3000 && window.Scrapper3000.bot) {
+                            window.Scrapper3000.bot.updateBot(itemName);
+                        }
+                        continue;
+                    }
+
                     // HARD GEAR: Load and attach 3D Model
                     const modelPath = `data/models/${itemName.replace(/ /g, "")}.json`;
                     const itemMesh = await this.assets.loadModel(modelPath);

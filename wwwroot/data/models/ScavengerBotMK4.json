@@ -1,0 +1,111 @@
+{
+    "Name": "ScavengerBotMK4",
+    "Parts": [
+        {
+            "Id": "bot_core",
+            "Type": "Box",
+            "Position": [
+                0,
+                0,
+                0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.4,
+                0.4,
+                0.4
+            ],
+            "ColorHex": "#3a3a3a"
+        },
+        {
+            "Id": "bot_eye",
+            "Type": "Sphere",
+            "ParentId": "bot_core",
+            "Position": [
+                0,
+                0,
+                0.22
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.2,
+                0.2,
+                0.1
+            ],
+            "ColorHex": "#00ccff",
+            "Material": "Glow"
+        },
+        {
+            "Id": "bot_wing_L",
+            "Type": "Box",
+            "ParentId": "bot_core",
+            "Position": [
+                -0.3,
+                0,
+                0
+            ],
+            "Rotation": [
+                0,
+                30,
+                0
+            ],
+            "Scale": [
+                0.4,
+                0.05,
+                0.2
+            ],
+            "ColorHex": "#2a2a2a"
+        },
+        {
+            "Id": "bot_wing_R",
+            "Type": "Box",
+            "ParentId": "bot_core",
+            "Position": [
+                0.3,
+                0,
+                0
+            ],
+            "Rotation": [
+                0,
+                -30,
+                0
+            ],
+            "Scale": [
+                0.4,
+                0.05,
+                0.2
+            ],
+            "ColorHex": "#2a2a2a"
+        },
+        {
+            "Id": "bot_thruster",
+            "Type": "Cylinder",
+            "ParentId": "bot_core",
+            "Position": [
+                0,
+                -0.22,
+                0
+            ],
+            "Rotation": [
+                0,
+                0,
+                0
+            ],
+            "Scale": [
+                0.15,
+                0.1,
+                0.15
+            ],
+            "ColorHex": "#ff6600",
+            "Material": "Glow"
+        }
+    ]
+}
