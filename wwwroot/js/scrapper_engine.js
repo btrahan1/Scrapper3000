@@ -117,11 +117,12 @@ window.Scrapper3000 = {
             pMat.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
             p.material = pMat;
 
-            // 1.5 Add Spotlight above
-            const light = new BABYLON.SpotLight("spot_" + itemType, pos.add(new BABYLON.Vector3(0, 3, 0)), new BABYLON.Vector3(0, -1, 0), Math.PI / 3, 2, this.scene);
-            light.diffuse = new BABYLON.Color3(1, 0.2, 0.2); // Cool Red
-            light.intensity = 2.0;
-            light.parent = p; // Cleanup together
+            pMat.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+            p.material = pMat;
+
+            // 1.5 NO Spotlights (Reverting to original single point light feel)
+            // But we keep the 'light' variable as null to not break existing cleanup code
+            const light = null;
 
             // 2. Spawn Custom Mesh
             let mesh;
@@ -155,11 +156,25 @@ window.Scrapper3000 = {
             if (mesh) {
                 mesh.position = itemPos;
                 mesh.isPickable = true;
+
+                // Interaction & Hover Glow (Original Logic)
                 mesh.actionManager = new BABYLON.ActionManager(this.scene);
+
+                // Hover Effects
+                mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, () => {
+                    mesh.renderOutline = true;
+                    mesh.outlineWidth = 0.05;
+                    mesh.outlineColor = new BABYLON.Color3(1, 1, 1);
+                }));
+                mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, () => {
+                    mesh.renderOutline = false;
+                }));
+
+                // Pick Trigger
                 mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
                     this.dotNetHelper.invokeMethodAsync('OnItemPickedUp', itemType);
                     mesh.dispose();
-                    if (light) light.dispose();
+                    if (light) light.dispose(); // Cleanup spotlight if it exists (legacy support)
                 }));
 
                 // Rotate Animation
@@ -192,14 +207,21 @@ window.Scrapper3000 = {
             await this.player.updateGear();
 
             // 4. Spawn Mobs
-            this.mobs.spawnRats();
-            this.mobs.spawnWolves();
+            try {
+                this.mobs.spawnRats();
+                this.mobs.spawnWolves();
+            } catch (mobErr) {
+                console.error("Mob spawn error (continuing):", mobErr);
+            }
 
         } catch (e) {
             console.error("CRITICAL ERROR in jumpToJunkyard:", e);
         } finally {
-            // ALWAYS ensure camera is switched, even if world gen fails
-            if (this.player) this.player.setupThirdPersonCamera();
+            // ALWAYS ensure camera is switched and player is visible
+            if (this.player) {
+                if (this.player.mesh) this.player.mesh.setEnabled(true);
+                this.player.setupThirdPersonCamera();
+            }
         }
     },
 
@@ -251,15 +273,18 @@ window.Scrapper3000 = {
         }
         shed.setEnabled(true);
 
-        // Warm interior light
+        // Warm interior light (Original "Spot" feel)
         let shedLight = this.scene.getLightByName("shedLight");
         if (!shedLight) {
-            shedLight = new BABYLON.PointLight("shedLight", new BABYLON.Vector3(0, 4, 0), this.scene);
-            shedLight.intensity = 1.0;
-            shedLight.diffuse = new BABYLON.Color3(1, 0.9, 0.75); // Warm Tungsten
+            shedLight = new BABYLON.PointLight("shedLight", new BABYLON.Vector3(0, 4, 1), this.scene);
+            shedLight.intensity = 0.8;
+            shedLight.diffuse = new BABYLON.Color3(1, 0.9, 0.7); // Warm Tungsten
             shedLight.specular = new BABYLON.Color3(1, 1, 1);
         }
         shedLight.setEnabled(true);
+
+        // Moody Background (Original clear color)
+        this.scene.clearColor = new BABYLON.Color4(0.01, 0.01, 0.02, 1);
 
         if (this.player) {
             this.player.setupFirstPersonCamera();

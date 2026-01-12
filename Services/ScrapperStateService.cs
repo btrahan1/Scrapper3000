@@ -164,9 +164,9 @@ namespace Scrapper3000.Services
         {
             if (HP <= 0 || IsDead) return;
 
-            // Defense: Every 2 points of DEF reduces damage by 1 (Min 1)
-            int netDamage = Math.Max(1, rawDamage - (Defense / 2));
-            HP = Math.Max(0, HP - netDamage);
+            // Damage is pre-calculated by the caller (MobManager.js) to match visual numbers
+            // We just apply the final amount.
+            HP = Math.Max(0, HP - Math.Max(1, rawDamage));
             
             if (HP <= 0)
             {
